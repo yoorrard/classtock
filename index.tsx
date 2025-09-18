@@ -149,7 +149,7 @@ const App: React.FC = () => {
 
         const isNicknameTaken = students.some(s => s.classId === classToJoin.id && s.nickname.toLowerCase() === nickname.trim().toLowerCase());
         if (isNicknameTaken) {
-            alert('해당 학급에서 이미 사용 중인 닉네임입니다.');
+            alert('해당 학급에서 이미 사용 중인 아이디입니다.');
             return;
         }
         
@@ -183,7 +183,7 @@ const App: React.FC = () => {
             setCurrentStudentId(studentToLogin.id);
             setView('student_dashboard');
         } else {
-            alert('닉네임 또는 비밀번호가 일치하지 않습니다.');
+            alert('아이디 또는 비밀번호가 일치하지 않습니다.');
         }
     };
 
@@ -304,8 +304,82 @@ const App: React.FC = () => {
 
 // --- COMPONENTS ---
 
-interface LandingPageProps { onSelectRole: (role: View) => void; }
-const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole }) => { 
+const PolicyView: React.FC<{ title: string; content: string; onBack: () => void; }> = ({ title, content, onBack }) => {
+    return (
+        <div className="container">
+            <header className="header" style={{ marginBottom: '1rem', textAlign: 'left' }}>
+                <h1 style={{ fontSize: '1.8rem', margin: 0 }}>{title}</h1>
+            </header>
+            <div className="policy-content">
+                <pre>{content}</pre>
+            </div>
+            <div className="action-buttons" style={{ marginTop: '2rem' }}>
+                <button type="button" className="button button-secondary" style={{ width: '100%' }} onClick={onBack}>메인으로 돌아가기</button>
+            </div>
+        </div>
+    );
+};
+
+const PolicyModal: React.FC<{ title: string; content: string; onClose: () => void; }> = ({ title, content, onClose }) => {
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <header className="modal-header">
+                    <h2>{title}</h2>
+                    <button onClick={onClose} className="close-button" aria-label="닫기">&times;</button>
+                </header>
+                <div className="policy-content">
+                    <pre>{content}</pre>
+                </div>
+                 <div className="action-buttons" style={{marginTop: '1.5rem'}}>
+                    <button type="button" className="button" style={{width: '100%'}} onClick={onClose}>확인</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const LandingPage: React.FC<{ onSelectRole: (role: View) => void; }> = ({ onSelectRole }) => {
+    const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
+    const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+    const openPolicy = (type: 'terms' | 'privacy') => {
+        if (type === 'terms') {
+            setPolicyModal({ title: '이용약관', content: termsOfService });
+        } else {
+            setPolicyModal({ title: '개인정보처리방침', content: privacyPolicy });
+        }
+    };
+    
+    const featuresData = [
+      {
+        icon: '📊',
+        title: '실감 나는 모의투자',
+        description: '실제 주식 데이터를 기반으로, 현실적인 투자 환경을 경험하며 경제 원리를 배웁니다.',
+      },
+      {
+        icon: '👩‍🏫',
+        title: '편리한 학급 관리',
+        description: '교사용 대시보드를 통해 학생들의 포트폴리오와 랭킹을 한눈에 파악하고 지도합니다.',
+      },
+      {
+        icon: '🏆',
+        title: '경쟁과 재미, 실시간 랭킹',
+        description: '학급 내 실시간 랭킹 보드를 통해 건전한 경쟁을 유도하고 학습 동기를 부여합니다.',
+      },
+      {
+        icon: '⚙️',
+        title: '자유로운 맞춤 설정',
+        description: '활동 기간, 시드머니, 투자 종목을 자유롭게 설정하여 맞춤형 금융 교육을 설계합니다.',
+      },
+    ];
+
+    const faqData = [
+        { q: "학생들은 실제 돈으로 투자를 하나요?", a: "아니요, '클래스톡'은 교육용 모의투자 서비스입니다. 모든 거래는 실제 금전적 가치가 없는 가상의 시드머니로 이루어집니다." },
+        { q: "참여 코드를 잃어버렸어요.", a: "참여 코드는 학급을 개설하신 선생님께 다시 문의해주세요. 선생님은 교사 대시보드에서 언제든지 코드를 확인할 수 있습니다." },
+        { q: "데이터는 안전하게 보관되나요?", a: "현재 '클래스톡'은 데모 버전으로, 모든 데이터는 브라우저를 새로고침하거나 닫으면 사라집니다. 중요한 정보는 별도로 기록해주세요." }
+    ];
+
     return (
         <div className="container" style={{ position: 'relative' }}>
             <header className="header">
@@ -328,6 +402,61 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole }) => {
                     </button>
                 </div>
             </div>
+
+            <div className="info-sections-landing">
+                 <div className="info-card-landing">
+                    <h2 className="info-title-landing">주요 기능</h2>
+                    <div className="features-grid">
+                        {featuresData.map((feature, index) => (
+                            <div className="feature-item" key={index}>
+                                <div className="feature-icon">{feature.icon}</div>
+                                <div className="feature-text">
+                                    <h3>{feature.title}</h3>
+                                    <p>{feature.description}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="info-card-landing">
+                    <h2 className="info-title-landing">활용 가이드</h2>
+                    <div className="guide-steps">
+                        <div className="guide-step">
+                            <span className="step-number">1</span>
+                            <p><strong>학급 개설</strong><br/>새 학급을 만들어 활동 기간과 시드머니를 설정합니다.</p>
+                        </div>
+                        <div className="guide-step">
+                            <span className="step-number">2</span>
+                            <p><strong>코드 공유</strong><br/>생성된 '참여 코드'를 학생들에게 공유하여 참여시킵니다.</p>
+                        </div>
+                        <div className="guide-step">
+                            <span className="step-number">3</span>
+                            <p><strong>학습 시작</strong><br/>랭킹과 포트폴리오를 보며 즐거운 투자 학습을 진행합니다.</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="info-card-landing">
+                    <h2 className="info-title-landing">자주 묻는 질문</h2>
+                    <div className="faq-list">
+                    {faqData.map((item, index) => (
+                        <div className="faq-item" key={index}>
+                            <button className="faq-question" onClick={() => setActiveFaq(activeFaq === index ? null : index)}>
+                                <span>{item.q}</span>
+                                <span className="faq-icon">{activeFaq === index ? '−' : '+'}</span>
+                            </button>
+                            <div className={`faq-answer ${activeFaq === index ? 'open' : ''}`}>
+                               <p>{item.a}</p>
+                            </div>
+                        </div>
+                    ))}
+                    </div>
+                </div>
+            </div>
+
+             <footer className="footer">
+                <button onClick={() => openPolicy('terms')} className="footer-link">이용약관</button>
+                <button onClick={() => openPolicy('privacy')} className="footer-link">개인정보처리방침</button>
+            </footer>
             <div style={{ position: 'absolute', bottom: '1rem', right: '1rem' }}>
                 <button
                     onClick={() => onSelectRole('teacher_dashboard')}
@@ -335,6 +464,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole }) => {
                     title="개발자용 바로가기" aria-label="개발자용 대시보드 바로가기"
                 > DEV </button>
             </div>
+            {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
         </div>
     );
 };
@@ -345,7 +475,7 @@ interface StudentLoginPortalProps extends PortalProps {
     onLogin: (code: string, nickname: string, password: string) => void;
 }
 const StudentLoginPortal: React.FC<StudentLoginPortalProps> = ({ onBack, onRegister, onLogin }) => {
-    const [isLoginMode, setIsLoginMode] = useState(false);
+    const [isLoginMode, setIsLoginMode] = useState(true);
     const [code, setCode] = useState('');
     const [nickname, setNickname] = useState('');
     const [password, setPassword] = useState('');
@@ -370,36 +500,81 @@ const StudentLoginPortal: React.FC<StudentLoginPortalProps> = ({ onBack, onRegis
                     <input type="text" value={code} onChange={e => setCode(e.target.value)} className="input-field" placeholder="학급 참여 코드" required />
                 </div>
                 <div className="input-group">
-                    <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} className="input-field" placeholder="닉네임" required />
+                    <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} className="input-field" placeholder="아이디" required />
                 </div>
                 <div className="input-group">
                     <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="input-field" placeholder="비밀번호" required />
                 </div>
                 <button type="submit" className="button" style={{width: '100%'}}>{isLoginMode ? '로그인' : '참여 완료'}</button>
             </form>
-             <p style={{ fontSize: '0.9rem', color: '#666', cursor: 'pointer', marginTop: '1.5rem' }} onClick={() => setIsLoginMode(!isLoginMode)}>
+             <button type="button" className="button-link" onClick={() => setIsLoginMode(!isLoginMode)}>
                 {isLoginMode ? '처음이신가요? 학급 참여하기' : '이미 참여했나요? 로그인'}
-            </p>
-            <div className="action-buttons" style={{marginTop: 0}}>
+            </button>
+            <div className="action-buttons" style={{marginTop: '1rem'}}>
                 <button type="button" className="button button-secondary" style={{width: '100%'}} onClick={onBack}>메인으로</button>
             </div>
         </div>
     );
 };
-interface TeacherLoginPortalProps extends PortalProps { onLoginSuccess: () => void; }
+
+interface TeacherLoginPortalProps extends PortalProps {
+    onLoginSuccess: () => void;
+}
 const TeacherLoginPortal: React.FC<TeacherLoginPortalProps> = ({ onBack, onLoginSuccess }) => {
     const [isLogin, setIsLogin] = useState(true);
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onLoginSuccess(); };
+    const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
+    
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onLoginSuccess();
+    };
+    
+    const handleGoogleAuth = () => {
+        if (isLogin) {
+            onLoginSuccess();
+        }
+        // In signup mode (!isLogin), do nothing.
+    };
+
+    const openPolicy = (type: 'terms' | 'privacy') => {
+        if (type === 'terms') {
+            setPolicyModal({ title: '이용약관', content: termsOfService });
+        } else {
+            setPolicyModal({ title: '개인정보처리방침', content: privacyPolicy });
+        }
+    };
+
     return (
         <div className="container">
             <header className="header"><h1>{isLogin ? '교사 로그인' : '교사 회원가입'}</h1><p>서비스를 이용하시려면 {isLogin ? '로그인이' : '회원가입이'} 필요합니다.</p></header>
+            
+            <button type="button" className="button button-google" onClick={handleGoogleAuth} style={{ width: '100%', marginBottom: '0.5rem' }}>
+                <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: 'middle', marginRight: '10px' }}>
+                    <path d="M17.64 9.20455C17.64 8.56591 17.5827 7.95273 17.4764 7.36364H9V10.8455H13.8436C13.6345 11.9705 12.9982 12.9236 12.0664 13.5673V15.8264H15.0145C16.7127 14.2618 17.64 11.9545 17.64 9.20455Z" fill="#4285F4"></path>
+                    <path d="M9 18C11.43 18 13.4673 17.1945 14.9564 15.8264L12.0082 13.5673C11.1927 14.1127 10.1564 14.44 9 14.44C6.65455 14.44 4.66364 12.9045 3.95 10.7773H0.954545V13.0455C2.45455 15.9091 5.48182 18 9 18Z" fill="#34A853"></path>
+                    <path d="M3.95 10.7773C3.81 10.3573 3.73 9.91727 3.73 9.45C3.73 8.98273 3.81 8.54273 3.95 8.12273V5.85455H0.954545C0.347273 7.10909 0 8.25 0 9.45C0 10.65 0.347273 11.7909 0.954545 13.0455L3.95 10.7773Z" fill="#FBBC05"></path>
+                    <path d="M9 3.54545C10.3227 3.54545 11.5073 4 12.44 4.89545L15.0145 2.32182C13.4636 0.886364 11.43 0 9 0C5.48182 0 2.45455 1.90909 0.954545 4.63636L3.95 6.90455C4.66364 4.77727 6.65455 3.54545 9 3.54545Z" fill="#EA4335"></path>
+                </svg>
+                Google 계정으로 {isLogin ? '로그인' : '회원가입'}
+            </button>
+            <div className="divider"><span>또는</span></div>
+
             <form onSubmit={handleSubmit}>
                 <div className="input-group"><input type="email" className="input-field" placeholder="이메일 주소" aria-label="이메일 주소" required /></div>
                 <div className="input-group"><input type="password" className="input-field" placeholder="비밀번호" aria-label="비밀번호" required /></div>
+                
+                {!isLogin && (
+                    <p className="agreement-text" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
+                        계속하면 클래스톡의 <button type="button" className="inline-link" onClick={() => openPolicy('terms')}>이용약관</button> 및 <br/>
+                        <button type="button" className="inline-link" onClick={() => openPolicy('privacy')}>개인정보처리방침</button>에 동의하는 것으로 간주됩니다.
+                    </p>
+                )}
+                
                 <button type="submit" className="button" style={{ width: '100%', marginBottom: '1rem' }}>{isLogin ? '로그인' : '회원가입'}</button>
             </form>
             <p style={{ fontSize: '0.9rem', color: '#666', cursor: 'pointer' }} onClick={() => setIsLogin(!isLogin)}>{isLogin ? '계정이 없으신가요? 회원가입' : '이미 계정이 있으신가요? 로그인'}</p>
             <div className="action-buttons" style={{marginTop: 0}}><button type="button" className="button button-secondary" style={{width: '100%'}} onClick={onBack}>메인으로</button></div>
+            {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
         </div>
     );
 };
@@ -800,6 +975,111 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
         </div>
     );
 };
+
+const termsOfService = `클래스톡 이용약관
+
+제1조 (목적)
+이 약관은 클래스톡(이하 "회사")이 제공하는 모의투자 교육 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
+
+제2조 (용어의 정의)
+1. 서비스: 구현되는 단말기와 상관없이 회원이 이용할 수 있는 클래스톡 및 관련 제반 서비스를 의미합니다.
+2. 회원: 서비스에 접속하여 이 약관에 따라 회사와 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 고객을 말하며, 교사 회원과 학생 회원으로 구분됩니다.
+3. 교사 회원: 학급을 개설하고 학생 회원을 관리하며 교육 활동을 진행하는 회원입니다.
+4. 학생 회원: 교사 회원이 개설한 학급에 참여하여 모의투자 활동을 하는 회원입니다.
+5. 학급 참여 코드: 교사 회원이 학급을 생성할 때 발급되는 고유한 문자 및 숫자의 조합으로, 학생 회원이 학급에 참여하기 위해 사용됩니다.
+6. 아이디: 회원의 식별과 서비스 이용을 위하여 회원이 정하고 회사가 승인하는 문자와 숫자의 조합을 의미합니다.
+7. 비밀번호: 회원이 부여받은 아이디와 일치되는 회원임을 확인하고 비밀보호를 위해 회원 자신이 정한 문자 또는 숫자의 조합을 의미합니다.
+
+제3조 (약관의 게시와 개정)
+1. 회사는 이 약관의 내용을 회원이 쉽게 알 수 있도록 서비스 초기 화면에 게시합니다.
+2. 회사는 "약관의 규제에 관한 법률", "정보통신망 이용촉진 및 정보보호 등에 관한 법률(이하 "정보통신망법")" 등 관련법을 위배하지 않는 범위에서 이 약관을 개정할 수 있습니다.
+3. 회사가 약관을 개정할 경우에는 적용일자 및 개정사유를 명시하여 현행약관과 함께 제1항의 방식에 따라 그 개정약관의 적용일자 7일 전부터 적용일자 전일까지 공지합니다.
+
+제4조 (서비스의 제공 및 변경)
+1. 회사는 다음과 같은 업무를 수행합니다.
+   - 교사 회원을 위한 학급 개설 및 관리 기능 제공
+   - 학생 회원을 위한 모의투자 환경 제공
+   - 투자 관련 학습 콘텐츠 제공
+   - 기타 회사가 정하는 업무
+2. 서비스는 연중무휴, 1일 24시간 제공함을 원칙으로 합니다.
+3. 현재 제공되는 서비스는 정식 버전이 아닌 데모(DEMO) 버전으로, 기능의 추가, 수정, 삭제가 수시로 발생할 수 있으며 데이터가 영구적으로 보관되지 않을 수 있습니다.
+
+제5조 (회원의 의무)
+1. 회원은 다음 행위를 하여서는 안 됩니다.
+   - 신청 또는 변경 시 허위 내용의 등록
+   - 타인의 정보 도용
+   - 공공질서 및 미풍양속에 위반되는 내용의 정보, 문장, 도형, 음성 등을 타인에게 유포하는 행위
+   - 회사의 사전 승낙 없이 서비스를 이용하여 영리활동을 하는 행위
+2. 회원은 관계법, 이 약관의 규정, 이용안내 및 서비스와 관련하여 공지한 주의사항, 회사가 통지하는 사항 등을 준수하여야 하며, 기타 회사의 업무에 방해되는 행위를 하여서는 안 됩니다.
+
+제6조 (면책조항)
+1. 본 서비스에서 제공하는 모든 정보와 데이터는 실제 금융 시장을 반영한 모의 데이터이며, 어떠한 경우에도 실제 금전적 가치를 가지지 않습니다.
+2. 본 서비스는 교육적 목적을 위해 제작되었으며, 실제 주식 투자를 권유하거나 자문하는 서비스가 아닙니다. 서비스 이용을 통해 얻은 정보를 바탕으로 한 실제 투자 결정에 대해 회사는 어떠한 책임도 지지 않습니다.
+3. 현재 데모 버전의 서비스에서는 사용자의 데이터(학급 정보, 학생 정보, 거래 내역 등)가 브라우저 세션에 임시로 저장되며, 브라우저를 새로고침하거나 종료할 경우 모든 데이터는 소멸됩니다. 데이터 유실에 대해 회사는 책임지지 않습니다.
+4. 회사는 천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.
+
+제7조 (준거법 및 재판관할)
+1. 회사와 회원 간에 발생한 분쟁에 대하여는 대한민국법을 준거법으로 합니다.
+2. 회사와 회원 간 발생한 분쟁에 관한 소송은 민사소송법 상의 관할법원에 제소합니다.
+
+부칙
+이 약관은 2024년 1월 1일부터 시행됩니다.`;
+
+const privacyPolicy = `클래스톡 개인정보처리방침
+
+클래스톡(이하 "회사")은 개인정보보호법 등 관련 법령상의 개인정보보호 규정을 준수하며, 관련 법령에 의거한 개인정보처리방침을 정하여 이용자 권익 보호에 최선을 다하고 있습니다.
+
+1. 개인정보의 수집 항목 및 이용 목적
+회사는 서비스 제공을 위해 필요한 최소한의 범위 내에서 다음과 같은 개인정보를 수집하고 있습니다.
+
+가. 교사 회원
+- 수집 항목: 이메일 주소, 비밀번호
+- 이용 목적: 회원 식별, 학급 관리 기능 제공, 공지사항 전달, 민원 처리
+
+나. 학생 회원
+- 수집 항목: 아이디(닉네임), 비밀번호, 학급 참여 코드
+- 이용 목적: 회원 식별, 학급 참여 및 모의투자 활동 데이터 관리
+
+다. 자동 생성 정보
+- 수집 항목: 접속 로그, 쿠키, 서비스 이용 기록
+- 이용 목적: 서비스 품질 개선, 부정 이용 방지
+
+2. 개인정보의 처리 및 보유 기간
+회사는 법령에 따른 개인정보 보유·이용기간 또는 정보주체로부터 개인정보를 수집 시에 동의받은 개인정보 보유·이용기간 내에서 개인정보를 처리 및 보유합니다.
+
+- **[중요] 현재 데모(DEMO) 버전의 경우, 모든 회원 정보 및 활동 데이터는 사용자의 브라우저 세션(메모리)에만 임시로 저장됩니다. 브라우저를 새로고침하거나 종료하는 경우, 수집된 모든 정보는 즉시 파기되며 서버에 영구적으로 저장되지 않습니다.**
+- 향후 정식 서비스 전환 시, 회원 탈퇴 시까지 개인정보를 보유하며, 탈퇴 요청 시 지체 없이 파기합니다.
+
+3. 개인정보의 제3자 제공
+회사는 정보주체의 동의, 법률의 특별한 규정 등 개인정보 보호법 제17조 및 제18조에 해당하는 경우에만 개인정보를 제3자에게 제공합니다. 현재 회사는 수집된 개인정보를 제3자에게 제공하고 있지 않습니다.
+
+4. 개인정보의 파기절차 및 방법
+회사는 원칙적으로 개인정보 수집 및 이용목적이 달성된 후에는 해당 정보를 지체없이 파기합니다. 파기절차 및 방법은 다음과 같습니다.
+
+- 파기절차: 이용자가 회원가입 등을 위해 입력한 정보는 목적이 달성된 후 별도의 DB로 옮겨져(종이의 경우 별도의 서류함) 내부 방침 및 기타 관련 법령에 의한 정보보호 사유에 따라(보유 및 이용기간 참조) 일정 기간 저장된 후 파기됩니다.
+- 파기방법: 전자적 파일형태로 저장된 개인정보는 기록을 재생할 수 없는 기술적 방법을 사용하여 삭제합니다.
+
+5. 정보주체와 법정대리인의 권리·무 및 그 행사방법
+이용자는 언제든지 등록되어 있는 자신의 개인정보를 조회하거나 수정할 수 있으며 가입해지를 요청할 수도 있습니다.
+(단, 현재 데모 버전에서는 데이터가 영구 저장되지 않으므로 해당 기능이 제공되지 않습니다.)
+
+6. 개인정보의 안전성 확보 조치
+회사는 이용자의 개인정보를 처리함에 있어 개인정보가 분실, 도난, 유출, 변조 또는 훼손되지 않도록 안전성 확보를 위하여 다음과 같은 기술적/관리적 대책을 강구하고 있습니다. (정식 서비스 기준)
+- 비밀번호 암호화
+- 해킹 등에 대비한 기술적 대책
+- 처리 직원의 최소화 및 교육
+
+7. 개인정보 보호책임자
+- 이름: OOO
+- 직책: 개인정보 보호책임자
+- 연락처: contact@classtock.com
+(※ 개인정보 보호 관련 문의는 위 연락처로 해주시기 바랍니다.)
+
+8. 고지의 의무
+현 개인정보처리방침 내용 추가, 삭제 및 수정이 있을 시에는 개정 최소 7일전부터 서비스 내 '공지사항'을 통해 고지할 것입니다.
+
+- 공고일자: 2024년 1월 1일
+- 시행일자: 2024년 1월 1일`;
 
 
 const container = document.getElementById('root');
