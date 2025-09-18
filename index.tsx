@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // --- DATA TYPES ---
-type View = 'landing' | 'student_join' | 'student_register' | 'teacher_login' | 'teacher_dashboard' | 'class_detail' | 'student_dashboard';
+type View = 'landing' | 'student_join' | 'teacher_login' | 'teacher_dashboard' | 'class_detail' | 'student_dashboard';
 
 interface Stock { code: string; name: string; price: number; }
 interface ClassInfo {
@@ -17,6 +17,7 @@ interface PortfolioItem { stockCode: string; quantity: number; averagePrice: num
 interface StudentInfo {
     id: string;
     nickname: string;
+    password: string; // Added for login
     classId: string;
     cash: number;
     portfolio: PortfolioItem[];
@@ -58,7 +59,6 @@ const App: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-    const [joiningClassId, setJoiningClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
     
     // --- AUTO TIME SIMULATION (KST 4 PM) ---
@@ -140,29 +140,53 @@ const App: React.FC = () => {
         setView('class_detail');
     };
     
-    const handleStudentJoinAttempt = (code: string): boolean => {
+    const handleStudentRegister = (code: string, nickname: string, password: string) => {
         const classToJoin = classes.find(c => `C${c.id.substring(c.id.length - 6)}`.toLowerCase() === code.toLowerCase().trim());
-        if (classToJoin) {
-            setJoiningClassId(classToJoin.id);
-            setView('student_register');
-            return true;
+        if (!classToJoin) {
+            alert('유효하지 않은 참여 코드입니다.');
+            return;
         }
-        return false;
-    };
 
-    const handleStudentRegister = (nickname: string) => {
-        if (!joiningClassId) return;
-        const classInfo = classes.find(c => c.id === joiningClassId);
-        if (!classInfo) return;
-
+        const isNicknameTaken = students.some(s => s.classId === classToJoin.id && s.nickname.toLowerCase() === nickname.trim().toLowerCase());
+        if (isNicknameTaken) {
+            alert('해당 학급에서 이미 사용 중인 닉네임입니다.');
+            return;
+        }
+        
         const newStudent: StudentInfo = {
-            id: `S${Date.now()}`, nickname, classId: joiningClassId, cash: classInfo.seedMoney, portfolio: [],
+            id: `S${Date.now()}`,
+            nickname: nickname.trim(),
+            password,
+            classId: classToJoin.id,
+            cash: classToJoin.seedMoney,
+            portfolio: [],
         };
         setStudents(prev => [...prev, newStudent]);
         setCurrentStudentId(newStudent.id);
-        setJoiningClassId(null);
         setView('student_dashboard');
     };
+
+    const handleStudentLogin = (code: string, nickname: string, password: string) => {
+        const classToLogin = classes.find(c => `C${c.id.substring(c.id.length - 6)}`.toLowerCase() === code.toLowerCase().trim());
+         if (!classToLogin) {
+            alert('학급 코드를 확인해주세요.');
+            return;
+        }
+        
+        const studentToLogin = students.find(s => 
+            s.classId === classToLogin.id && 
+            s.nickname.toLowerCase() === nickname.trim().toLowerCase() &&
+            s.password === password
+        );
+
+        if (studentToLogin) {
+            setCurrentStudentId(studentToLogin.id);
+            setView('student_dashboard');
+        } else {
+            alert('닉네임 또는 비밀번호가 일치하지 않습니다.');
+        }
+    };
+
 
     const handleUpdateClassStocks = (classId: string, updatedStockCodes: string[]) => {
         setClasses(prev => prev.map(c => c.id === classId ? { ...c, allowedStocks: updatedStockCodes } : c));
@@ -231,8 +255,7 @@ const App: React.FC = () => {
     // --- RENDER LOGIC ---
     const renderView = () => {
         switch (view) {
-            case 'student_join': return <StudentJoinPortal onBack={() => setView('landing')} onCodeSubmit={handleStudentJoinAttempt} />;
-            case 'student_register': return <StudentRegisterPortal onBack={() => setView('student_join')} onRegister={handleStudentRegister} />;
+            case 'student_join': return <StudentLoginPortal onBack={() => setView('landing')} onRegister={handleStudentRegister} onLogin={handleStudentLogin} />;
             case 'teacher_login': return <TeacherLoginPortal onBack={() => setView('landing')} onLoginSuccess={() => setView('teacher_dashboard')} />;
             case 'teacher_dashboard':
                 return <TeacherDashboard 
@@ -316,60 +339,50 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole }) => {
     );
 };
 interface PortalProps { onBack: () => void; }
-interface StudentJoinProps extends PortalProps { onCodeSubmit: (code: string) => boolean; }
-const StudentJoinPortal: React.FC<StudentJoinProps> = ({ onBack, onCodeSubmit }) => {
-    const [code, setCode] = useState('');
-    const [error, setError] = useState('');
 
+interface StudentLoginPortalProps extends PortalProps {
+    onRegister: (code: string, nickname: string, password: string) => void;
+    onLogin: (code: string, nickname: string, password: string) => void;
+}
+const StudentLoginPortal: React.FC<StudentLoginPortalProps> = ({ onBack, onRegister, onLogin }) => {
+    const [isLoginMode, setIsLoginMode] = useState(false);
+    const [code, setCode] = useState('');
+    const [nickname, setNickname] = useState('');
+    const [password, setPassword] = useState('');
+    
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-        const success = onCodeSubmit(code);
-        if (!success) {
-            setError('유효하지 않은 참여 코드입니다. 다시 확인해주세요.');
+        if (isLoginMode) {
+            onLogin(code, nickname, password);
+        } else {
+            onRegister(code, nickname, password);
         }
     };
     
     return (
         <div className="container">
             <header className="header">
-                <h1>학급 참여하기</h1>
-                <p>선생님께 받은 참여 코드를 입력해주세요.</p>
+                <h1>{isLoginMode ? '학급 로그인' : '학급 참여하기'}</h1>
+                <p>{isLoginMode ? '정보를 입력하여 활동을 이어가세요.' : '코드를 입력하고 프로필을 만들어 참여하세요.'}</p>
             </header>
             <form onSubmit={handleSubmit}>
                 <div className="input-group">
-                    <input type="text" className="input-field" placeholder="학급 참여 코드" aria-label="학급 참여 코드" value={code} onChange={(e) => setCode(e.target.value)} required />
+                    <input type="text" value={code} onChange={e => setCode(e.target.value)} className="input-field" placeholder="학급 참여 코드" required />
                 </div>
-                {error && <p className="error-message">{error}</p>}
-                <div className="action-buttons">
-                    <button type="button" className="button button-secondary" onClick={onBack}>뒤로가기</button>
-                    <button type="submit" className="button">다음</button>
+                <div className="input-group">
+                    <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} className="input-field" placeholder="닉네임" required />
                 </div>
+                <div className="input-group">
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="input-field" placeholder="비밀번호" required />
+                </div>
+                <button type="submit" className="button" style={{width: '100%'}}>{isLoginMode ? '로그인' : '참여 완료'}</button>
             </form>
-        </div>
-    );
-};
-interface StudentRegisterProps extends PortalProps { onRegister: (nickname: string) => void; }
-const StudentRegisterPortal: React.FC<StudentRegisterProps> = ({ onBack, onRegister }) => {
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const nickname = formData.get('nickname') as string;
-        if (nickname) {
-            onRegister(nickname);
-        }
-    };
-    return (
-        <div className="container">
-            <header className="header"><h1>프로필 설정</h1><p>사용할 닉네임과 비밀번호를 입력해주세요.</p></header>
-            <form onSubmit={handleSubmit}>
-                <div className="input-group"><input type="text" name="nickname" className="input-field" placeholder="닉네임" aria-label="닉네임" required /></div>
-                <div className="input-group"><input type="password" className="input-field" placeholder="비밀번호" aria-label="비밀번호" required /></div>
-                <div className="action-buttons">
-                    <button type="button" className="button button-secondary" onClick={onBack}>뒤로가기</button>
-                    <button type="submit" className="button">참여 완료</button>
-                </div>
-            </form>
+             <p style={{ fontSize: '0.9rem', color: '#666', cursor: 'pointer', marginTop: '1.5rem' }} onClick={() => setIsLoginMode(!isLoginMode)}>
+                {isLoginMode ? '처음이신가요? 학급 참여하기' : '이미 참여했나요? 로그인'}
+            </p>
+            <div className="action-buttons" style={{marginTop: 0}}>
+                <button type="button" className="button button-secondary" style={{width: '100%'}} onClick={onBack}>메인으로</button>
+            </div>
         </div>
     );
 };
