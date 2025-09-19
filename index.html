@@ -804,6 +804,50 @@
                 gap: 1.25rem;
             }
         }
+        
+        /* --- Responsive Styles for Wider Screens --- */
+        @media (min-width: 768px) {
+            body {
+                padding: 40px 20px;
+            }
+
+            #root {
+                max-width: 900px;
+            }
+
+            /* Landing Page */
+            .role-selection {
+                flex-direction: row;
+            }
+            .role-card {
+                flex: 1;
+            }
+
+            /* Teacher Dashboard */
+            .class-list {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            /* Class Detail View - 'info' and 'stocks' tabs */
+            .info-section-grid,
+            .stock-manager-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+            }
+            
+            /* Student Portfolio Modal */
+            .portfolio-summary {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
+
+            /* Student Dashboard Portfolio Card */
+            .portfolio-card-body {
+                grid-template-columns: repeat(4, 1fr);
+                align-items: center;
+            }
+        }
 
 
     </style>

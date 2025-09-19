@@ -368,6 +368,11 @@ const LandingPage: React.FC<{ onSelectRole: (role: View) => void; }> = ({ onSele
         description: '학급 내 실시간 랭킹 보드를 통해 건전한 경쟁을 유도하고 학습 동기를 부여합니다.',
       },
       {
+        icon: '🎁',
+        title: '동기부여 보상 시스템',
+        description: '과제 수행, 적극적 참여 등 교육 활동에 대한 보상으로 추가 시드머니를 지급하여 학습 동기를 높일 수 있습니다.',
+      },
+      {
         icon: '⚙️',
         title: '자유로운 맞춤 설정',
         description: '활동 기간, 시드머니, 투자 종목을 자유롭게 설정하여 맞춤형 금융 교육을 설계합니다.',
@@ -377,6 +382,7 @@ const LandingPage: React.FC<{ onSelectRole: (role: View) => void; }> = ({ onSele
     const faqData = [
         { q: "학생들은 실제 돈으로 투자를 하나요?", a: "아니요, '클래스톡'은 교육용 모의투자 서비스입니다. 모든 거래는 실제 금전적 가치가 없는 가상의 시드머니로 이루어집니다." },
         { q: "참여 코드를 잃어버렸어요.", a: "참여 코드는 학급을 개설하신 선생님께 다시 문의해주세요. 선생님은 교사 대시보드에서 언제든지 코드를 확인할 수 있습니다." },
+        { q: "시드머니를 모두 사용하면 어떻게 되나요?", a: "기본적으로 초기 시드머니로만 활동하지만, 선생님께서 과제 보상이나 특별 활동 보너스로 추가 시드머니를 지급해주실 수 있습니다. 선생님과 상의해보세요." },
         { q: "데이터는 안전하게 보관되나요?", a: "현재 '클래스톡'은 데모 버전으로, 모든 데이터는 브라우저를 새로고침하거나 닫으면 사라집니다. 중요한 정보는 별도로 기록해주세요." }
     ];
 
@@ -432,6 +438,10 @@ const LandingPage: React.FC<{ onSelectRole: (role: View) => void; }> = ({ onSele
                         <div className="guide-step">
                             <span className="step-number">3</span>
                             <p><strong>학습 시작</strong><br/>랭킹과 포트폴리오를 보며 즐거운 투자 학습을 진행합니다.</p>
+                        </div>
+                         <div className="guide-step">
+                            <span className="step-number">4</span>
+                            <p><strong>학습 독려</strong><br/>과제 보상 등 추가 시드머니를 지급하며 학생 참여를 독려합니다.</p>
                         </div>
                     </div>
                 </div>
@@ -579,13 +589,29 @@ const TeacherLoginPortal: React.FC<TeacherLoginPortalProps> = ({ onBack, onLogin
     );
 };
 interface CreateClassModalProps { onClose: () => void; onCreate: (newClass: Omit<ClassInfo, 'id' | 'allowedStocks'>) => void; }
-const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onCreate }) => { 
+const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onCreate }) => {
+    const [dateError, setDateError] = useState('');
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-        const newClass = { name: formData.get('className') as string, startDate: formData.get('startDate') as string, endDate: formData.get('endDate') as string, seedMoney: Number(formData.get('seedMoney')), };
+        const startDate = formData.get('startDate') as string;
+        const endDate = formData.get('endDate') as string;
+
+        if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+            setDateError('종료일을 시작일 이후로 입력하세요.');
+            return;
+        }
+
+        const newClass = {
+            name: formData.get('className') as string,
+            startDate,
+            endDate,
+            seedMoney: Number(formData.get('seedMoney')),
+        };
         onCreate(newClass);
     };
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -593,9 +619,10 @@ const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onCreate }
                 <form onSubmit={handleSubmit}>
                     <div className="input-group"><label htmlFor="className">학급 이름</label><input id="className" name="className" type="text" className="input-field" placeholder="예: 1학년 1반 금융 교실" required /></div>
                     <div className="input-group-row">
-                        <div className="input-group"><label htmlFor="startDate">활동 시작일</label><input id="startDate" name="startDate" type="date" className="input-field" required /></div>
-                        <div className="input-group"><label htmlFor="endDate">활동 종료일</label><input id="endDate" name="endDate" type="date" className="input-field" required /></div>
+                        <div className="input-group"><label htmlFor="startDate">활동 시작일</label><input id="startDate" name="startDate" type="date" className="input-field" onChange={() => setDateError('')} required /></div>
+                        <div className="input-group"><label htmlFor="endDate">활동 종료일</label><input id="endDate" name="endDate" type="date" className="input-field" onChange={() => setDateError('')} required /></div>
                     </div>
+                    {dateError && <p className="error-message">{dateError}</p>}
                     <div className="input-group"><label htmlFor="seedMoney">초기 시드머니</label><input id="seedMoney" name="seedMoney" type="number" className="input-field" placeholder="예: 1000000" required /></div>
                     <div className="action-buttons"><button type="button" className="button button-secondary" onClick={onClose}>취소</button><button type="submit" className="button">생성하기</button></div>
                 </form>
@@ -664,7 +691,7 @@ const StockManager: React.FC<{
     const selectedStockDetails = allowedStocks.map(code => allStocks.find(s => s.code === code)).filter(Boolean) as Stock[];
 
     return (
-        <div>
+        <div className="stock-manager-container">
             <div className="info-card">
                 <h4>선택된 종목 ({allowedStocks.length}/10)</h4>
                 {selectedStockDetails.length > 0 ? (
@@ -828,7 +855,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                 <button className={`tab-button ${activeTab === 'ranking' ? 'active' : ''}`} onClick={() => setActiveTab('ranking')}>랭킹 보드</button>
             </div>
             <div className="tab-content">
-                {activeTab === 'info' && <div className="info-section"><div className="info-card"><h4>학급 참여 코드</h4><p>학생들에게 이 코드를 공유하여 학급에 참여하도록 하세요.</p><div className="join-code-box"><span>{joinCode}</span><button onClick={copyCode} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>복사</button></div></div><div className="info-card"><h4>학급 정보</h4><p><strong>기간:</strong> {classInfo.startDate} ~ {classInfo.endDate}</p><p><strong>초기 시드머니:</strong> {classInfo.seedMoney.toLocaleString()}원</p></div></div>}
+                {activeTab === 'info' && <div className="info-section info-section-grid"><div className="info-card"><h4>학급 참여 코드</h4><p>학생들에게 이 코드를 공유하여 학급에 참여하도록 하세요.</p><div className="join-code-box"><span>{joinCode}</span><button onClick={copyCode} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>복사</button></div></div><div className="info-card"><h4>학급 정보</h4><p><strong>기간:</strong> {classInfo.startDate} ~ {classInfo.endDate}</p><p><strong>초기 시드머니:</strong> {classInfo.seedMoney.toLocaleString()}원</p></div></div>}
                 {activeTab === 'students' && <div className="info-section">{students.length > 0 ? <ul className="data-list">{students.map(s => <li key={s.id} className="data-list-item student-list-item-clickable" onClick={() => setViewingStudent(s)}><span>{s.nickname}</span><span style={{color: '#555', fontSize: '0.9rem'}}>자산: {s.totalAssets.toLocaleString()}원</span><button onClick={(e) => { e.stopPropagation(); setBonusStudent(s); }} className="button button-bonus">+ 보너스</button></li>)}</ul> : <div className="info-card" style={{textAlign: 'center'}}><p>아직 참여한 학생이 없습니다.</p></div>}</div>}
                 {activeTab === 'stocks' && <StockManager allowedStocks={classInfo.allowedStocks} allStocks={allStocks} onUpdate={onUpdateClassStocks} />}
                 {activeTab === 'ranking' && <RankingBoard students={students} />}
