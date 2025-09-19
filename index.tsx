@@ -31,6 +31,7 @@ interface Transaction {
     quantity: number;
     price: number;
     timestamp: number;
+    reason?: string;
 }
 type TradeType = 'buy' | 'sell';
 interface TradeInfo { type: TradeType; stock: Stock; }
@@ -233,12 +234,26 @@ const App: React.FC = () => {
         setTransactions(prev => [newTransaction, ...prev]);
     };
 
-    const handleAwardBonus = (studentId: string, amount: number) => {
-        setStudents(prev => prev.map(s => s.id === studentId ? { ...s, cash: s.cash + amount } : s));
-        const newTransaction: Transaction = {
-            id: `T${Date.now()}`, studentId, stockCode: "BONUS", stockName: "학급 보너스", type: 'bonus', quantity: 1, price: amount, timestamp: Date.now()
-        };
-        setTransactions(prev => [newTransaction, ...prev]);
+    const handleAwardBonus = (studentIds: string[], amount: number, reason: string) => {
+        setStudents(prev => 
+            prev.map(s => 
+                studentIds.includes(s.id) ? { ...s, cash: s.cash + amount } : s
+            )
+        );
+
+        const newTransactions: Transaction[] = studentIds.map(studentId => ({
+            id: `T${Date.now()}-${studentId}`,
+            studentId,
+            stockCode: "BONUS",
+            stockName: "학급 보너스",
+            type: 'bonus',
+            quantity: 1,
+            price: amount,
+            timestamp: Date.now(),
+            reason,
+        }));
+        
+        setTransactions(prev => [...newTransactions, ...prev]);
     };
     
     const handleLogout = () => {
@@ -740,18 +755,21 @@ const RankingBoard: React.FC<{ students: (StudentInfo & { totalAssets: number })
 };
 
 interface BonusModalProps {
-    student: StudentInfo;
+    students: StudentInfo[];
     onClose: () => void;
-    onConfirm: (amount: number) => void;
+    onConfirm: (amount: number, reason: string) => void;
 }
-const BonusModal: React.FC<BonusModalProps> = ({ student, onClose, onConfirm }) => {
+const BonusModal: React.FC<BonusModalProps> = ({ students, onClose, onConfirm }) => {
     const [amount, setAmount] = useState<number>(10000);
+    const [reason, setReason] = useState<string>('');
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (amount > 0) {
-            onConfirm(amount);
+        if (amount > 0 && amount <= 10000000) {
+            onConfirm(amount, reason.trim());
         }
     };
+    const recipientText = students.length === 1 ? students[0].nickname : `${students.length}명`;
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -760,10 +778,14 @@ const BonusModal: React.FC<BonusModalProps> = ({ student, onClose, onConfirm }) 
                     <button onClick={onClose} className="close-button" aria-label="닫기">&times;</button>
                 </header>
                 <form onSubmit={handleSubmit}>
-                    <p style={{textAlign: 'left', marginTop: 0}}><strong>{student.nickname}</strong> 학생에게 보너스를 지급합니다.</p>
+                    <p style={{textAlign: 'left', marginTop: 0}}><strong>{recipientText}</strong>에게 보너스를 지급합니다.</p>
                     <div className="input-group">
-                        <label htmlFor="bonus-amount">지급할 금액</label>
-                        <input id="bonus-amount" type="number" min="1" step="1000" className="input-field" value={amount} onChange={e => setAmount(Number(e.target.value))} required />
+                        <label htmlFor="bonus-amount">지급할 금액 (1 ~ 10,000,000)</label>
+                        <input id="bonus-amount" type="number" min="1" max="10000000" step="1" className="input-field" value={amount} onChange={e => setAmount(Number(e.target.value))} required />
+                    </div>
+                     <div className="input-group">
+                        <label htmlFor="bonus-reason">지급 사유 (선택 사항)</label>
+                        <input id="bonus-reason" type="text" className="input-field" value={reason} onChange={e => setReason(e.target.value)} placeholder="예: 우수 과제 제출" />
                     </div>
                     <div className="action-buttons">
                         <button type="button" className="button button-secondary" onClick={onClose}>취소</button>
@@ -832,21 +854,55 @@ interface ClassDetailViewProps extends PortalProps {
     students: (StudentInfo & { totalAssets: number })[]; 
     allStocks: Stock[]; 
     onUpdateClassStocks: (updated: string[]) => void; 
-    onAwardBonus: (studentId: string, amount: number) => void;
+    onAwardBonus: (studentIds: string[], amount: number, reason: string) => void;
 }
 const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, students, allStocks, onUpdateClassStocks, onAwardBonus }) => {
     const [activeTab, setActiveTab] = useState('info');
-    const [bonusStudent, setBonusStudent] = useState<(StudentInfo & { totalAssets: number }) | null>(null);
+    const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
+    const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
+    const [bonusRecipients, setBonusRecipients] = useState<(StudentInfo & { totalAssets: number })[]>([]);
     const [viewingStudent, setViewingStudent] = useState<(StudentInfo & { totalAssets: number }) | null>(null);
     const joinCode = `C${classInfo.id.substring(classInfo.id.length - 6)}`;
     const copyCode = () => navigator.clipboard.writeText(joinCode).then(() => alert('참여 코드가 복사되었습니다!'));
 
-    const handleConfirmBonus = (amount: number) => {
-        if (bonusStudent) {
-            onAwardBonus(bonusStudent.id, amount);
-            setBonusStudent(null);
+    const handleSelectStudent = (studentId: string) => {
+        setSelectedStudentIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(studentId)) {
+                newSet.delete(studentId);
+            } else {
+                newSet.add(studentId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedStudentIds(new Set(students.map(s => s.id)));
+        } else {
+            setSelectedStudentIds(new Set());
         }
     };
+
+    const openBonusModal = (recipients: (StudentInfo & { totalAssets: number })[]) => {
+        if (recipients.length > 0) {
+            setBonusRecipients(recipients);
+            setIsBonusModalOpen(true);
+        }
+    };
+
+    const handleConfirmBonus = (amount: number, reason: string) => {
+        if (bonusRecipients.length > 0) {
+            onAwardBonus(bonusRecipients.map(s => s.id), amount, reason);
+            setIsBonusModalOpen(false);
+            setBonusRecipients([]);
+            setSelectedStudentIds(new Set());
+        }
+    };
+
+    const selectedStudents = students.filter(s => selectedStudentIds.has(s.id));
+    const allStudentsSelected = students.length > 0 && selectedStudentIds.size === students.length;
     
     return (
         <div className="container">
@@ -859,12 +915,34 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
             </div>
             <div className="tab-content">
                 {activeTab === 'info' && <div className="info-section info-section-grid"><div className="info-card"><h4>학급 참여 코드</h4><p>학생들에게 이 코드를 공유하여 학급에 참여하도록 하세요.</p><div className="join-code-box"><span>{joinCode}</span><button onClick={copyCode} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>복사</button></div></div><div className="info-card"><h4>학급 정보</h4><p><strong>기간:</strong> {classInfo.startDate} ~ {classInfo.endDate}</p><p><strong>초기 시드머니:</strong> {classInfo.seedMoney.toLocaleString()}원</p></div></div>}
-                {activeTab === 'students' && <div className="info-section">{students.length > 0 ? <ul className="data-list">{students.map(s => <li key={s.id} className="data-list-item student-list-item-clickable" onClick={() => setViewingStudent(s)}><span>{s.nickname}</span><span style={{color: '#555', fontSize: '0.9rem'}}>자산: {s.totalAssets.toLocaleString()}원</span><button onClick={(e) => { e.stopPropagation(); setBonusStudent(s); }} className="button button-bonus">+ 보너스</button></li>)}</ul> : <div className="info-card" style={{textAlign: 'center'}}><p>아직 참여한 학생이 없습니다.</p></div>}</div>}
+                {activeTab === 'students' && <div className="info-section">{students.length > 0 ? (
+                    <>
+                        <div className="student-management-bar">
+                            <div className="select-all-group">
+                                <input type="checkbox" id="select-all-students" checked={allStudentsSelected} onChange={handleSelectAll} disabled={students.length === 0} />
+                                <label htmlFor="select-all-students">전체 선택 ({selectedStudentIds.size}/{students.length})</label>
+                            </div>
+                            <div className="action-buttons-group">
+                                <button onClick={() => openBonusModal(selectedStudents)} disabled={selectedStudentIds.size === 0} className="button button-bonus">선택 학생 보너스</button>
+                                <button onClick={() => openBonusModal(students)} disabled={students.length === 0} className="button button-bonus">전체 학생 보너스</button>
+                            </div>
+                        </div>
+                        <ul className="data-list">{students.map(s => (
+                            <li key={s.id} className="data-list-item student-list-item-clickable" onClick={() => setViewingStudent(s)}>
+                                <div className="student-select-info">
+                                    <input type="checkbox" checked={selectedStudentIds.has(s.id)} onChange={() => handleSelectStudent(s.id)} onClick={(e) => e.stopPropagation()} />
+                                    <span>{s.nickname}</span>
+                                </div>
+                                <span style={{color: '#555', fontSize: '0.9rem'}}>자산: {s.totalAssets.toLocaleString()}원</span>
+                            </li>
+                        ))}</ul>
+                    </>
+                ) : <div className="info-card" style={{textAlign: 'center'}}><p>아직 참여한 학생이 없습니다.</p></div>}</div>}
                 {activeTab === 'stocks' && <StockManager allowedStocks={classInfo.allowedStocks} allStocks={allStocks} onUpdate={onUpdateClassStocks} />}
                 {activeTab === 'ranking' && <RankingBoard students={students} />}
             </div>
              <div className="action-buttons" style={{marginTop: '2rem'}}><button type="button" className="button button-secondary" style={{width: '100%'}} onClick={onBack}>대시보드로 돌아가기</button></div>
-             {bonusStudent && <BonusModal student={bonusStudent} onClose={() => setBonusStudent(null)} onConfirm={handleConfirmBonus} />}
+             {isBonusModalOpen && <BonusModal students={bonusRecipients} onClose={() => setIsBonusModalOpen(false)} onConfirm={handleConfirmBonus} />}
              {viewingStudent && <StudentPortfolioModal student={viewingStudent} stocks={allStocks} onClose={() => setViewingStudent(null)} />}
         </div>
     );
@@ -932,7 +1010,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
         if (!stock) return null;
         const currentValue = stock.price * item.quantity;
         const profit = (stock.price - item.averagePrice) * item.quantity;
-        const profitRate = (profit / (item.averagePrice * item.quantity)) * 100;
+        const profitRate = item.averagePrice > 0 ? (profit / (item.averagePrice * item.quantity)) * 100 : 0;
         return { ...item, stock, currentValue, profit, profitRate };
     }).filter(Boolean), [portfolio, stocks]);
 
@@ -988,8 +1066,12 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                     <li key={t.id} className="data-list-item">
                          {t.type === 'bonus' ? (
                             <>
-                                <div className="stock-info"><span style={{color: 'var(--bonus-color)'}}>{t.stockName}</span><small>{new Date(t.timestamp).toLocaleString()}</small></div>
-                                <div style={{color: 'var(--bonus-color)', fontWeight: '700'}}>+{t.price.toLocaleString()}원</div>
+                                <div className="stock-info">
+                                    <span style={{color: 'var(--bonus-color)'}}>{t.stockName}</span>
+                                    <small>{new Date(t.timestamp).toLocaleString()}</small>
+                                    {t.reason && <small className="transaction-reason">사유: {t.reason}</small>}
+                                </div>
+                                <div style={{color: 'var(--bonus-color)', fontWeight: '700', textAlign: 'right'}}>+{t.price.toLocaleString()}원</div>
                             </>
                         ) : (
                             <>
