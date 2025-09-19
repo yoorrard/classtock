@@ -64,7 +64,7 @@ const App: React.FC = () => {
     
     // --- AUTO TIME SIMULATION (KST 4 PM) ---
     useEffect(() => {
-        const lastUpdateTimestampStr = localStorage.getItem('classtock_lastUpdateTime');
+        const lastUpdateTimestampStr = localStorage.getItem('classstock_lastUpdateTime');
         const now = new Date();
 
         const calculateDaysToSimulate = (lastTime: number, currentTime: number): number => {
@@ -116,7 +116,7 @@ const App: React.FC = () => {
             }
         }
         
-        localStorage.setItem('classtock_lastUpdateTime', now.getTime().toString());
+        localStorage.setItem('classstock_lastUpdateTime', now.getTime().toString());
         
     }, []);
 
@@ -445,7 +445,7 @@ const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginS
                     
                     {!isLogin && (
                         <p className="agreement-text" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
-                            계속하면 클래스톡의 <button type="button" className="inline-link" onClick={() => openPolicy('terms')}>이용약관</button> 및 <br/>
+                            계속하면 ClassStock의 <button type="button" className="inline-link" onClick={() => openPolicy('terms')}>이용약관</button> 및 <br/>
                             <button type="button" className="inline-link" onClick={() => openPolicy('privacy')}>개인정보처리방침</button>에 동의하는 것으로 간주됩니다.
                         </p>
                     )}
@@ -503,16 +503,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole, onStudentRegist
     ];
 
     const faqData = [
-        { q: "학생들은 실제 돈으로 투자를 하나요?", a: "아니요, '클래스톡'은 교육용 모의투자 서비스입니다. 모든 거래는 실제 금전적 가치가 없는 가상의 시드머니로 이루어집니다." },
+        { q: "학생들은 실제 돈으로 투자를 하나요?", a: "아니요, 'ClassStock'은 교육용 모의투자 서비스입니다. 모든 거래는 실제 금전적 가치가 없는 가상의 시드머니로 이루어집니다." },
         { q: "참여 코드를 잃어버렸어요.", a: "참여 코드는 학급을 개설하신 선생님께 다시 문의해주세요. 선생님은 교사 대시보드에서 언제든지 코드를 확인할 수 있습니다." },
         { q: "시드머니를 모두 사용하면 어떻게 되나요?", a: "기본적으로 초기 시드머니로만 활동하지만, 선생님께서 과제 보상이나 특별 활동 보너스로 추가 시드머니를 지급해주실 수 있습니다. 선생님과 상의해보세요." },
-        { q: "데이터는 안전하게 보관되나요?", a: "현재 '클래스톡'은 데모 버전으로, 모든 데이터는 브라우저를 새로고침하거나 닫으면 사라집니다. 중요한 정보는 별도로 기록해주세요." }
+        { q: "데이터는 안전하게 보관되나요?", a: "현재 'ClassStock'은 데모 버전으로, 모든 데이터는 브라우저를 새로고침하거나 닫으면 사라집니다. 중요한 정보는 별도로 기록해주세요." }
     ];
 
     return (
         <div className="container" style={{ position: 'relative' }}>
             <header className="header">
-                <h1>클래스톡</h1>
+                <h1>ClassStock</h1>
                 <p>선생님과 함께하는 즐거운 금융 교실</p>
             </header>
             <div className="role-selection">
@@ -1088,13 +1088,13 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
     );
 };
 
-const termsOfService = `클래스톡 이용약관
+const termsOfService = `ClassStock 이용약관
 
 제1조 (목적)
-이 약관은 클래스톡(이하 "회사")이 제공하는 모의투자 교육 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
+이 약관은 ClassStock(이하 "회사")이 제공하는 모의투자 교육 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
 
 제2조 (용어의 정의)
-1. 서비스: 구현되는 단말기와 상관없이 회원이 이용할 수 있는 클래스톡 및 관련 제반 서비스를 의미합니다.
+1. 서비스: 구현되는 단말기와 상관없이 회원이 이용할 수 있는 ClassStock 및 관련 제반 서비스를 의미합니다.
 2. 회원: 서비스에 접속하여 이 약관에 따라 회사와 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 고객을 말하며, 교사 회원과 학생 회원으로 구분됩니다.
 3. 교사 회원: 학급을 개설하고 학생 회원을 관리하며 교육 활동을 진행하는 회원입니다.
 4. 학생 회원: 교사 회원이 개설한 학급에 참여하여 모의투자 활동을 하는 회원입니다.
@@ -1137,9 +1137,9 @@ const termsOfService = `클래스톡 이용약관
 부칙
 이 약관은 2024년 1월 1일부터 시행됩니다.`;
 
-const privacyPolicy = `클래스톡 개인정보처리방침
+const privacyPolicy = `ClassStock 개인정보처리방침
 
-클래스톡(이하 "회사")은 개인정보보호법 등 관련 법령상의 개인정보보호 규정을 준수하며, 관련 법령에 의거한 개인정보처리방침을 정하여 이용자 권익 보호에 최선을 다하고 있습니다.
+ClassStock(이하 "회사")은 개인정보보호법 등 관련 법령상의 개인정보보호 규정을 준수하며, 관련 법령에 의거한 개인정보처리방침을 정하여 이용자 권익 보호에 최선을 다하고 있습니다.
 
 1. 개인정보의 수집 항목 및 이용 목적
 회사는 서비스 제공을 위해 필요한 최소한의 범위 내에서 다음과 같은 개인정보를 수집하고 있습니다.
@@ -1184,7 +1184,7 @@ const privacyPolicy = `클래스톡 개인정보처리방침
 7. 개인정보 보호책임자
 - 이름: OOO
 - 직책: 개인정보 보호책임자
-- 연락처: contact@classtock.com
+- 연락처: contact@classstock.com
 (※ 개인정보 보호 관련 문의는 위 연락처로 해주시기 바랍니다.)
 
 8. 고지의 의무
