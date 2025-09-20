@@ -203,6 +203,18 @@
         .input-group {
             margin-bottom: 1.5rem;
         }
+        
+        .textarea-field {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Noto Sans KR', sans-serif;
+            resize: vertical;
+            min-height: 120px;
+        }
 
         .input-field {
             width: 100%;
@@ -291,6 +303,7 @@
             display: flex;
             justify-content: center;
             gap: 1.5rem;
+            position: relative;
         }
 
         .footer-link {
@@ -331,6 +344,7 @@
             max-width: 500px;
             box-sizing: border-box;
             animation: fadeIn 0.3s ease-out;
+            text-align: left;
         }
         
         @keyframes fadeIn {
@@ -825,8 +839,15 @@
         .info-title-landing {
             font-size: 1.2rem;
             font-weight: 700;
-            margin: 0 0 1.5rem 0;
+            margin: 0 0 1rem 0;
             color: var(--primary-dark);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .info-title-landing .more-link {
+            font-size: 0.9rem;
+            font-weight: 500;
         }
         .features-grid {
             display: grid;
@@ -1017,6 +1038,112 @@
         @keyframes fadeOut {
             from { opacity: 1; }
             to { opacity: 0; }
+        }
+        
+        /* Notice & QnA Board Styles */
+        .board-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border-top: 1px solid #eee;
+        }
+        .board-item {
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .board-item-header {
+            padding: 1.25rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+        }
+        .board-item:hover .board-item-header {
+            background-color: var(--background-color);
+        }
+        .board-item-title {
+            font-weight: 500;
+            color: var(--text-color);
+            margin: 0;
+            font-size: 1rem;
+        }
+        .board-item-title-secret {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #555;
+        }
+        .board-item-meta {
+            font-size: 0.85rem;
+            color: #666;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+        .board-item-content {
+            padding: 0 1rem 1.5rem 1rem;
+            color: #555;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            border-top: 1px dashed #eee;
+            text-align: left;
+        }
+        .qna-answer {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: var(--background-color);
+            border-radius: 8px;
+            border-top: 2px solid var(--primary-color);
+        }
+        .qna-answer-header {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        .qna-status {
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .qna-status-answered { background-color: var(--success-color); }
+        .qna-status-pending { background-color: #777; }
+        
+        .attachment-section {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        .attachment-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .attachment-link {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        .file-input-label {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: #e9ecef;
+            color: #495057;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .file-input-label:hover {
+            background-color: #dde2e6;
+        }
+        .attached-file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 480px) {

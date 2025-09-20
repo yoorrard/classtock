@@ -1,4 +1,4 @@
-import { Stock } from './types';
+import { Stock, Notice, QnAPost } from './types';
 
 export const mockStockData: Stock[] = [
     // Recommended
@@ -21,6 +21,57 @@ export const mockStockData: Stock[] = [
     { code: '003550', name: 'LG', price: 95000 }, // 지주사
     { code: '017670', name: 'SK텔레콤', price: 51000 }, // 통신
 ];
+
+export const mockNotices: Notice[] = [
+    {
+        id: 'N3',
+        title: '[안내] ClassStock 데모 버전 안내',
+        content: '안녕하세요, ClassStock입니다.\n\n현재 서비스는 데모 버전으로 운영되고 있으며, 모든 데이터(학급, 학생, 거래내역 등)는 브라우저를 새로고침하거나 종료하면 초기화됩니다.\n\n정식 버전에서는 데이터가 안전하게 보관될 예정이오니, 데모 버전 이용 시 중요한 내용은 별도로 기록해주시기 바랍니다.\n\n감사합니다.',
+        createdAt: new Date('2024-05-01T10:00:00+09:00').getTime(),
+    },
+    {
+        id: 'N2',
+        title: '[업데이트] 교사 대시보드 기능 개선',
+        content: '교사 대시보드에 다음과 같은 기능이 추가 및 개선되었습니다.\n\n- 거래 수수료 설정 기능 추가\n- 학급 생성 개수 제한 (최대 2개)\n- 학급 삭제 기능 추가\n- 종목 관리 UI 개선\n\n더 나은 서비스를 위해 항상 노력하겠습니다.',
+        createdAt: new Date('2024-05-15T11:00:00+09:00').getTime(),
+    },
+    {
+        id: 'N1',
+        title: '[중요] 서비스 점검 안내 (06/01 02:00 ~ 04:00)',
+        content: '보다 안정적인 서비스 제공을 위해 아래와 같이 시스템 점검을 실시할 예정입니다.\n\n- 점검 일시: 2024년 6월 1일(토) 02:00 ~ 04:00 (약 2시간)\n- 점검 내용: 서버 안정화 및 데이터베이스 최적화\n\n점검 시간 동안 서비스 이용이 일시적으로 중단될 수 있으니, 이용에 참고하시기 바랍니다.\n\n이용에 불편을 드려 죄송합니다.',
+        createdAt: new Date('2024-05-28T09:00:00+09:00').getTime(),
+    },
+].sort((a,b) => b.createdAt - a.createdAt);
+
+export const mockQandAPosts: QnAPost[] = [
+    {
+        id: 'Q1',
+        author: '김선생',
+        question: '학생이 참여 코드를 입력해도 학급에 들어올 수 없다고 합니다. 어떻게 해야 하나요?',
+        answer: '안녕하세요, ClassStock 관리자입니다.\n\n참여 코드는 대소문자를 구분하지 않지만, 숫자 0과 알파벳 O 등 혼동하기 쉬운 문자가 있는지 다시 한번 확인 부탁드립니다.\n\n교사 대시보드 > 학급 관리 > 기본 정보 탭에서 참여 코드를 복사하여 학생에게 정확하게 전달해주시는 것을 권장합니다.\n\n문제가 지속될 경우, Q&A 게시판에 다시 문의 남겨주시면 빠르게 확인하겠습니다.',
+        createdAt: new Date('2024-05-20T14:00:00+09:00').getTime(),
+        answeredAt: new Date('2024-05-20T16:30:00+09:00').getTime(),
+        isSecret: false,
+    },
+    {
+        id: 'Q2',
+        author: '이학생',
+        question: '주가는 언제, 어떻게 변경되나요?',
+        answer: '현재 ClassStock의 주가 데이터는 매일 오후 4시(KST)를 기준으로, 전일 종가 대비 -10% ~ +10% 범위 내에서 랜덤하게 변동됩니다. 이는 실제 주식 시장의 변동성을 교육적으로 체험할 수 있도록 설계된 시뮬레이션입니다.\n\n(참고: 본 시뮬레이션은 실제 주가와는 무관합니다.)',
+        createdAt: new Date('2024-05-22T10:10:00+09:00').getTime(),
+        answeredAt: new Date('2024-05-22T11:00:00+09:00').getTime(),
+        isSecret: false,
+    },
+    {
+        id: 'Q3',
+        author: '박보호',
+        question: '제 포트폴리오 수익률 계산이 이상한 것 같아요. 확인 부탁드립니다.',
+        createdAt: new Date('2024-05-29T17:00:00+09:00').getTime(),
+        isSecret: true,
+        password: '1234',
+    },
+].sort((a,b) => b.createdAt - a.createdAt);
+
 
 export const termsOfService = `ClassStock 이용약관
 

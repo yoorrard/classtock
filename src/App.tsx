@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage } from './types';
-import { mockStockData } from './data';
+import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost } from './types';
+import { mockStockData, mockNotices, mockQandAPosts } from './data';
 
 import LandingPage from './components/landing/LandingPage';
 import TeacherDashboard from './components/teacher/TeacherDashboard';
 import ClassDetailView from './components/teacher/ClassDetailView';
 import StudentDashboard from './components/student/StudentDashboard';
+import NoticeBoard from './components/public/NoticeBoard';
+import QnABoard from './components/public/QnABoard';
+import AdminDashboard from './components/admin/AdminDashboard';
 import { ToastContainer } from './components/shared/Toast';
 
 const App: React.FC = () => {
@@ -16,6 +19,9 @@ const App: React.FC = () => {
     const [students, setStudents] = useState<StudentInfo[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
+    const [notices, setNotices] = useState<Notice[]>(mockNotices);
+    const [qnaPosts, setQnaPosts] = useState<QnAPost[]>(mockQandAPosts);
+    const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
     
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -182,7 +188,6 @@ const App: React.FC = () => {
         }
     };
 
-
     const handleUpdateClassStocks = (classId: string, updatedStockCodes: string[]) => {
         setClasses(prev => prev.map(c => c.id === classId ? { ...c, allowedStocks: updatedStockCodes } : c));
         addToast('투자 종목이 성공적으로 업데이트되었습니다.', 'success');
@@ -283,6 +288,60 @@ const App: React.FC = () => {
         setView('landing'); 
     };
     
+    const handleAdminLogin = (password: string) => {
+        if (password === 'admin') {
+            setIsAdminLoggedIn(true);
+            setView('admin_dashboard');
+            addToast('관리자 모드로 로그인했습니다.', 'success');
+        } else {
+            addToast('비밀번호가 올바르지 않습니다.', 'error');
+        }
+    };
+    
+    const handleAdminLogout = () => {
+        setIsAdminLoggedIn(false);
+        setView('landing');
+    };
+
+    const handleSaveNotice = (notice: Notice) => {
+        setNotices(prev => {
+            const index = prev.findIndex(n => n.id === notice.id);
+            if (index > -1) {
+                const updated = [...prev];
+                updated[index] = notice;
+                return updated.sort((a,b) => b.createdAt - a.createdAt);
+            } else {
+                return [notice, ...prev].sort((a,b) => b.createdAt - a.createdAt);
+            }
+        });
+        addToast('공지사항이 저장되었습니다.', 'success');
+    };
+
+    const handleDeleteNotice = (noticeId: string) => {
+        setNotices(prev => prev.filter(n => n.id !== noticeId));
+        addToast('공지사항이 삭제되었습니다.', 'success');
+    };
+
+    const handleAskQuestion = (postData: Omit<QnAPost, 'id' | 'createdAt'>) => {
+        const newPost: QnAPost = {
+            id: `Q${Date.now()}`,
+            createdAt: Date.now(),
+            ...postData
+        };
+        setQnaPosts(prev => [newPost, ...prev].sort((a,b) => b.createdAt - a.createdAt));
+        addToast('질문이 등록되었습니다. 관리자가 확인 후 답변을 드릴 예정입니다.', 'success');
+    };
+    
+    const handleAnswerQuestion = (qnaId: string, answer: string) => {
+        setQnaPosts(prev => prev.map(p => p.id === qnaId ? { ...p, answer, answeredAt: Date.now() } : p));
+        addToast('답변이 저장되었습니다.', 'success');
+    };
+
+    const handleDeleteQnAPost = (qnaId: string) => {
+        setQnaPosts(prev => prev.filter(p => p.id !== qnaId));
+        addToast('Q&A 게시글이 삭제되었습니다.', 'success');
+    };
+    
     // --- DERIVED STATE ---
     const selectedClass = classes.find(c => c.id === selectedClassId);
     const currentStudent = students.find(s => s.id === currentStudentId);
@@ -331,12 +390,30 @@ const App: React.FC = () => {
                     onLogout={handleLogout}
                     isTradingActive={isActivityActive(studentClass)}
                 />;
+            case 'notice_board':
+                return <NoticeBoard notices={notices} onBack={() => setView('landing')} />;
+            case 'qna_board':
+                return <QnABoard posts={qnaPosts} onAskQuestion={handleAskQuestion} onBack={() => setView('landing')} addToast={addToast} />;
+            case 'admin_dashboard':
+                if (!isAdminLoggedIn) { setView('landing'); return null; }
+                return <AdminDashboard 
+                    notices={notices}
+                    qnaPosts={qnaPosts}
+                    onSaveNotice={handleSaveNotice}
+                    onDeleteNotice={handleDeleteNotice}
+                    onAnswerQuestion={handleAnswerQuestion}
+                    onDeleteQnAPost={handleDeleteQnAPost}
+                    onLogout={handleAdminLogout}
+                />;
             case 'landing':
             default: return <LandingPage
-                onSelectRole={setView} 
+                notices={notices}
+                onNavigate={setView}
                 onStudentRegister={handleStudentRegister}
                 onStudentLogin={handleStudentLogin}
                 onTeacherLogin={() => setView('teacher_dashboard')}
+                onAdminLogin={handleAdminLogin}
+                addToast={addToast}
             />;
         }
     };

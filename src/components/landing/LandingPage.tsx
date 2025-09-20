@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
-import { View } from '../../types';
+import { View, Notice, ToastMessage } from '../../types';
 import { termsOfService, privacyPolicy } from '../../data';
 import PolicyModal from '../shared/PolicyModal';
 import StudentLoginModal from './StudentLoginModal';
 import TeacherLoginModal from './TeacherLoginModal';
+import AdminLoginModal from '../admin/AdminLoginModal';
 
 interface LandingPageProps {
-    onSelectRole: (role: View) => void;
+    notices: Notice[];
+    onNavigate: (view: View) => void;
     onStudentRegister: (code: string, nickname: string, password: string) => void;
     onStudentLogin: (code: string, nickname: string, password: string) => void;
     onTeacherLogin: () => void;
+    onAdminLogin: (password: string) => void;
+    addToast: (message: string, type?: ToastMessage['type']) => void;
 }
-const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole, onStudentRegister, onStudentLogin, onTeacherLogin }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStudentRegister, onStudentLogin, onTeacherLogin, onAdminLogin, addToast }) => {
     const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
-    const [activeModal, setActiveModal] = useState<'student' | 'teacher' | null>(null);
+    const [activeModal, setActiveModal] = useState<'student' | 'teacher' | 'admin' | null>(null);
+    const latestNotices = notices.slice(0, 3);
 
     const openPolicy = (type: 'terms' | 'privacy') => {
         if (type === 'terms') {
@@ -23,6 +28,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole, onStudentRegist
             setPolicyModal({ title: '개인정보처리방침', content: privacyPolicy });
         }
     };
+    
+    const handleFooterLinkClick = (e: React.MouseEvent, type: 'notice' | 'qna') => {
+        e.preventDefault();
+        onNavigate(type === 'notice' ? 'notice_board' : 'qna_board');
+    }
     
     const featuresData = [
       {
@@ -46,7 +56,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole, onStudentRegist
         description: '활동 기간, 시드머니, 투자 종목을 자유롭게 설정하여 맞춤형 금융 교육을 설계합니다.',
       },
     ];
-
+    
     const faqData = [
         { q: "학생들은 실제 돈으로 투자를 하나요?", a: "아니요, 'ClassStock'은 교육용 모의투자 서비스입니다. 모든 거래는 실제 금전적 가치가 없는 가상의 시드머니로 이루어집니다." },
         { q: "참여 코드를 잃어버렸어요.", a: "참여 코드는 학급을 개설하신 선생님께 다시 문의해주세요. 선생님은 교사 대시보드에서 언제든지 코드를 확인할 수 있습니다." },
@@ -55,7 +65,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole, onStudentRegist
     ];
 
     return (
-        <div className="container" style={{ position: 'relative' }}>
+        <div className="container" style={{ position: 'relative', textAlign: 'center' }}>
             <header className="header">
                 <h1>ClassStock</h1>
                 <p>선생님과 함께하는 즐거운 금융 교실</p>
@@ -114,6 +124,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole, onStudentRegist
                     </div>
                 </div>
                 <div className="info-card-landing">
+                    <h2 className="info-title-landing">
+                        <span>새로운 소식</span>
+                        <button className="inline-link more-link" onClick={() => onNavigate('notice_board')}>더보기</button>
+                    </h2>
+                    <div className="faq-list" style={{border: 'none'}}>
+                       {latestNotices.map(notice => (
+                           <div key={notice.id} className="faq-item" style={{display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', alignItems: 'center'}}>
+                               <span style={{
+                                   textOverflow: 'ellipsis',
+                                   whiteSpace: 'nowrap',
+                                   overflow: 'hidden',
+                                   cursor: 'pointer'
+                               }} onClick={() => onNavigate('notice_board')}>{notice.title}</span>
+                               <span style={{fontSize: '0.85rem', color: '#666', flexShrink: 0, marginLeft: '1rem'}}>{new Date(notice.createdAt).toLocaleDateString()}</span>
+                           </div>
+                       ))}
+                    </div>
+                </div>
+                <div className="info-card-landing">
                     <h2 className="info-title-landing">자주 묻는 질문</h2>
                     <div className="faq-list">
                     {faqData.map((item, index) => (
@@ -134,17 +163,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole, onStudentRegist
              <footer className="footer">
                 <button onClick={() => openPolicy('terms')} className="footer-link">이용약관</button>
                 <button onClick={() => openPolicy('privacy')} className="footer-link">개인정보처리방침</button>
+                <button onClick={(e) => handleFooterLinkClick(e, 'notice')} className="footer-link">공지사항</button>
+                <button onClick={(e) => handleFooterLinkClick(e, 'qna')} className="footer-link">Q&A 게시판</button>
+                <button onClick={() => setActiveModal('admin')} className="footer-link" style={{position: 'absolute', right: 0, opacity: 0.8}}>Admin</button>
             </footer>
-            <div style={{ position: 'absolute', bottom: '1rem', right: '1rem' }}>
-                <button
-                    onClick={() => onSelectRole('teacher_dashboard')}
-                    style={{ background: '#ffc107', color: 'black', border: 'none', borderRadius: '8px', width: '50px', height: '30px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', }}
-                    title="개발자용 바로가기" aria-label="개발자용 대시보드 바로가기"
-                > DEV </button>
-            </div>
+            
             {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
             {activeModal === 'student' && <StudentLoginModal onClose={() => setActiveModal(null)} onRegister={onStudentRegister} onLogin={onStudentLogin} />}
             {activeModal === 'teacher' && <TeacherLoginModal onClose={() => setActiveModal(null)} onLoginSuccess={onTeacherLogin} />}
+            {activeModal === 'admin' && <AdminLoginModal onClose={() => setActiveModal(null)} onLogin={(password) => { onAdminLogin(password); setActiveModal(null); }} />}
         </div>
     );
 };
