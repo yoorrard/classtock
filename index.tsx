@@ -39,6 +39,12 @@ interface Transaction {
 type TradeType = 'buy' | 'sell';
 interface TradeInfo { type: TradeType; stock: Stock; }
 
+type ToastMessage = {
+    id: number;
+    message: string;
+    type: 'success' | 'error' | 'info';
+};
+
 
 // --- MOCK DATA ---
 const mockStockData: Stock[] = [
@@ -70,6 +76,7 @@ const App: React.FC = () => {
     const [classes, setClasses] = useState<ClassInfo[]>([]);
     const [students, setStudents] = useState<StudentInfo[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [toasts, setToasts] = useState<ToastMessage[]>([]);
     
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -134,6 +141,15 @@ const App: React.FC = () => {
 
 
     // --- HELPER FUNCTIONS ---
+    const addToast = (message: string, type: ToastMessage['type'] = 'info') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+    };
+
+    const dismissToast = (id: number) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+    };
+
     const isActivityActive = (classInfo: ClassInfo | null): boolean => {
         if (!classInfo || !classInfo.startDate || !classInfo.endDate) return false;
         
@@ -155,11 +171,12 @@ const App: React.FC = () => {
     // --- HANDLER FUNCTIONS ---
     const handleCreateClass = (newClassData: Omit<ClassInfo, 'id' | 'allowedStocks'>) => {
         if (classes.length >= 2) {
-            alert('학급은 최대 2개까지만 생성할 수 있습니다.');
+            addToast('학급은 최대 2개까지만 생성할 수 있습니다.', 'error');
             return;
         }
         const newClass: ClassInfo = { id: `C${Date.now()}`, allowedStocks: [], ...newClassData };
         setClasses(prev => [...prev, newClass]);
+        addToast(`'${newClass.name}' 학급이 생성되었습니다.`, 'success');
     };
 
     const handleDeleteClass = (classId: string) => {
@@ -170,6 +187,7 @@ const App: React.FC = () => {
         setClasses(prev => prev.filter(c => c.id !== classId));
         setStudents(prev => prev.filter(s => s.classId !== classId));
         setTransactions(prev => prev.filter(t => !studentIdsToDelete.includes(t.studentId)));
+        addToast('학급이 삭제되었습니다.', 'success');
     };
 
     const handleSelectClass = (classId: string) => {
@@ -180,13 +198,13 @@ const App: React.FC = () => {
     const handleStudentRegister = (code: string, nickname: string, password: string) => {
         const classToJoin = classes.find(c => `C${c.id.substring(c.id.length - 6)}`.toLowerCase() === code.toLowerCase().trim());
         if (!classToJoin) {
-            alert('유효하지 않은 참여 코드입니다.');
+            addToast('유효하지 않은 참여 코드입니다.', 'error');
             return;
         }
 
         const isNicknameTaken = students.some(s => s.classId === classToJoin.id && s.nickname.toLowerCase() === nickname.trim().toLowerCase());
         if (isNicknameTaken) {
-            alert('해당 학급에서 이미 사용 중인 아이디입니다.');
+            addToast('해당 학급에서 이미 사용 중인 아이디입니다.', 'error');
             return;
         }
         
@@ -201,12 +219,13 @@ const App: React.FC = () => {
         setStudents(prev => [...prev, newStudent]);
         setCurrentStudentId(newStudent.id);
         setView('student_dashboard');
+        addToast(`'${classToJoin.name}'에 오신 것을 환영합니다!`, 'success');
     };
 
     const handleStudentLogin = (code: string, nickname: string, password: string) => {
         const classToLogin = classes.find(c => `C${c.id.substring(c.id.length - 6)}`.toLowerCase() === code.toLowerCase().trim());
          if (!classToLogin) {
-            alert('학급 코드를 확인해주세요.');
+            addToast('학급 코드를 확인해주세요.', 'error');
             return;
         }
         
@@ -220,13 +239,14 @@ const App: React.FC = () => {
             setCurrentStudentId(studentToLogin.id);
             setView('student_dashboard');
         } else {
-            alert('아이디 또는 비밀번호가 일치하지 않습니다.');
+            addToast('아이디 또는 비밀번호가 일치하지 않습니다.', 'error');
         }
     };
 
 
     const handleUpdateClassStocks = (classId: string, updatedStockCodes: string[]) => {
         setClasses(prev => prev.map(c => c.id === classId ? { ...c, allowedStocks: updatedStockCodes } : c));
+        addToast('투자 종목이 성공적으로 업데이트되었습니다.', 'success');
     };
 
     const handleTrade = (studentId: string, stockCode: string, quantity: number, type: TradeType) => {
@@ -238,7 +258,7 @@ const App: React.FC = () => {
         const studentClass = classes.find(c => c.id === student.classId);
 
         if (!isActivityActive(studentClass)) {
-            alert('현재는 활동 기간이 아닙니다.');
+            addToast('현재는 활동 기간이 아닙니다.', 'error');
             return;
         }
         
@@ -251,7 +271,7 @@ const App: React.FC = () => {
 
         if (type === 'buy') {
             const totalCost = stock.price * quantity + commission;
-            if (student.cash < totalCost) { alert('현금이 부족합니다.'); return; }
+            if (student.cash < totalCost) { addToast('현금이 부족합니다.', 'error'); return; }
             
             student.cash -= totalCost;
             const existingHoldingIndex = student.portfolio.findIndex(p => p.stockCode === stockCode);
@@ -265,7 +285,7 @@ const App: React.FC = () => {
             }
         } else { // sell
             const existingHolding = student.portfolio.find(p => p.stockCode === stockCode);
-            if (!existingHolding || existingHolding.quantity < quantity) { alert('보유 수량이 부족합니다.'); return; }
+            if (!existingHolding || existingHolding.quantity < quantity) { addToast('보유 수량이 부족합니다.', 'error'); return; }
 
             student.cash += (stock.price * quantity) - commission;
             existingHolding.quantity -= quantity;
@@ -279,6 +299,7 @@ const App: React.FC = () => {
             id: `T${Date.now()}`, studentId, stockCode, stockName: stock.name, type, quantity, price: stock.price, timestamp: Date.now()
         };
         setTransactions(prev => [newTransaction, ...prev]);
+        addToast(`'${stock.name}' ${type === 'buy' ? '매수' : '매도'} 주문이 체결되었습니다.`, 'success');
     };
 
     const handleAwardBonus = (studentIds: string[], amount: number, reason: string) => {
@@ -301,6 +322,7 @@ const App: React.FC = () => {
         }));
         
         setTransactions(prev => [...newTransactions, ...prev]);
+        addToast(`${studentIds.length}명에게 보너스가 지급되었습니다.`, 'success');
     };
     
     const handleLogout = () => {
@@ -337,7 +359,8 @@ const App: React.FC = () => {
                     allStocks={stocks}
                     onUpdateClassStocks={(updated) => handleUpdateClassStocks(selectedClass.id, updated)}
                     onAwardBonus={handleAwardBonus}
-                    onBack={() => { setSelectedClassId(null); setView('teacher_dashboard'); }} 
+                    onBack={() => { setSelectedClassId(null); setView('teacher_dashboard'); }}
+                    addToast={addToast}
                 />;
             case 'student_dashboard':
                 if (!currentStudent || !studentClass) { setView('landing'); return null; }
@@ -366,10 +389,39 @@ const App: React.FC = () => {
         }
     };
 
-    return <div className="app-container">{renderView()}</div>;
+    return <div className="app-container">
+        {renderView()}
+        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+    </div>;
 };
 
 // --- COMPONENTS ---
+
+const Toast: React.FC<{ message: ToastMessage; onDismiss: (id: number) => void; }> = ({ message, onDismiss }) => {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onDismiss(message.id);
+        }, 3000); // Auto-dismiss after 3 seconds
+        return () => clearTimeout(timer);
+    }, [message, onDismiss]);
+
+    return (
+        <div className={`toast toast-${message.type}`}>
+            {message.message}
+            <button onClick={() => onDismiss(message.id)} className="toast-close-button">&times;</button>
+        </div>
+    );
+};
+
+const ToastContainer: React.FC<{ toasts: ToastMessage[]; onDismiss: (id: number) => void; }> = ({ toasts, onDismiss }) => {
+    return (
+        <div className="toast-container">
+            {toasts.map(toast => (
+                <Toast key={toast.id} message={toast} onDismiss={onDismiss} />
+            ))}
+        </div>
+    );
+};
 
 const DeleteConfirmationModal: React.FC<{
     classInfo: ClassInfo;
@@ -881,7 +933,6 @@ const StockManager: React.FC<{
 
     const handleSave = () => {
         onSave(selectedCodes);
-        alert('종목 선택이 완료되어 학생들에게 적용되었습니다.');
     };
     
     const selectedStockDetails = selectedCodes.map(code => allStocks.find(s => s.code === code)).filter(Boolean) as Stock[];
@@ -1044,15 +1095,16 @@ interface ClassDetailViewProps extends PortalProps {
     allStocks: Stock[]; 
     onUpdateClassStocks: (updated: string[]) => void; 
     onAwardBonus: (studentIds: string[], amount: number, reason: string) => void;
+    addToast: (message: string, type?: ToastMessage['type']) => void;
 }
-const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, students, allStocks, onUpdateClassStocks, onAwardBonus }) => {
+const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, students, allStocks, onUpdateClassStocks, onAwardBonus, addToast }) => {
     const [activeTab, setActiveTab] = useState('info');
     const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
     const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
     const [bonusRecipients, setBonusRecipients] = useState<(StudentInfo & { totalAssets: number })[]>([]);
     const [viewingStudent, setViewingStudent] = useState<(StudentInfo & { totalAssets: number }) | null>(null);
     const joinCode = `C${classInfo.id.substring(classInfo.id.length - 6)}`;
-    const copyCode = () => navigator.clipboard.writeText(joinCode).then(() => alert('참여 코드가 복사되었습니다!'));
+    const copyCode = () => navigator.clipboard.writeText(joinCode).then(() => addToast('참여 코드가 복사되었습니다!', 'success'));
 
     const handleSelectStudent = (studentId: string) => {
         setSelectedStudentIds(prev => {
