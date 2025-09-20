@@ -1,0 +1,152 @@
+import React, { useState } from 'react';
+import { View } from '../../types';
+import { termsOfService, privacyPolicy } from '../../data';
+import PolicyModal from '../shared/PolicyModal';
+import StudentLoginModal from './StudentLoginModal';
+import TeacherLoginModal from './TeacherLoginModal';
+
+interface LandingPageProps {
+    onSelectRole: (role: View) => void;
+    onStudentRegister: (code: string, nickname: string, password: string) => void;
+    onStudentLogin: (code: string, nickname: string, password: string) => void;
+    onTeacherLogin: () => void;
+}
+const LandingPage: React.FC<LandingPageProps> = ({ onSelectRole, onStudentRegister, onStudentLogin, onTeacherLogin }) => {
+    const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
+    const [activeFaq, setActiveFaq] = useState<number | null>(null);
+    const [activeModal, setActiveModal] = useState<'student' | 'teacher' | null>(null);
+
+    const openPolicy = (type: 'terms' | 'privacy') => {
+        if (type === 'terms') {
+            setPolicyModal({ title: '이용약관', content: termsOfService });
+        } else {
+            setPolicyModal({ title: '개인정보처리방침', content: privacyPolicy });
+        }
+    };
+    
+    const featuresData = [
+      {
+        icon: '📊',
+        title: '실감 나는 모의투자',
+        description: '실제 주식 데이터를 기반으로, 현실적인 투자 환경을 경험하며 경제 원리를 배웁니다.',
+      },
+      {
+        icon: '👩‍🏫',
+        title: '편리한 학급 관리',
+        description: '교사용 대시보드를 통해 학생들의 포트폴리오와 랭킹을 한눈에 파악하고 지도합니다.',
+      },
+      {
+        icon: '🎁',
+        title: '동기부여 보상 시스템',
+        description: '과제 수행, 적극적 참여 등 교육 활동에 대한 보상으로 추가 시드머니를 지급하여 학습 동기를 높일 수 있습니다.',
+      },
+      {
+        icon: '⚙️',
+        title: '자유로운 맞춤 설정',
+        description: '활동 기간, 시드머니, 투자 종목을 자유롭게 설정하여 맞춤형 금융 교육을 설계합니다.',
+      },
+    ];
+
+    const faqData = [
+        { q: "학생들은 실제 돈으로 투자를 하나요?", a: "아니요, 'ClassStock'은 교육용 모의투자 서비스입니다. 모든 거래는 실제 금전적 가치가 없는 가상의 시드머니로 이루어집니다." },
+        { q: "참여 코드를 잃어버렸어요.", a: "참여 코드는 학급을 개설하신 선생님께 다시 문의해주세요. 선생님은 교사 대시보드에서 언제든지 코드를 확인할 수 있습니다." },
+        { q: "시드머니를 모두 사용하면 어떻게 되나요?", a: "기본적으로 초기 시드머니로만 활동하지만, 선생님께서 과제 보상이나 특별 활동 보너스로 추가 시드머니를 지급해주실 수 있습니다. 선생님과 상의해보세요." },
+        { q: "데이터는 안전하게 보관되나요?", a: "현재 'ClassStock'은 데모 버전으로, 모든 데이터는 브라우저를 새로고침하거나 닫으면 사라집니다. 중요한 정보는 별도로 기록해주세요." }
+    ];
+
+    return (
+        <div className="container" style={{ position: 'relative' }}>
+            <header className="header">
+                <h1>ClassStock</h1>
+                <p>선생님과 함께하는 즐거운 금융 교실</p>
+            </header>
+            <div className="role-selection">
+                <div className="role-card" role="region" aria-labelledby="teacher_title">
+                    <h2 id="teacher_title">교사용</h2>
+                    <p>학급을 만들고 학생들의 투자를 관리하세요.</p>
+                    <button className="button" onClick={() => setActiveModal('teacher')} aria-label="교사용으로 시작하기">
+                        시작하기
+                    </button>
+                </div>
+                <div className="role-card" role="region" aria-labelledby="student_title">
+                    <h2 id="student_title">학생용</h2>
+                    <p>참여 코드를 입력하고 모의투자를 시작하세요.</p>
+                    <button className="button" onClick={() => setActiveModal('student')} aria-label="학생용으로 참여하기">
+                        참여하기
+                    </button>
+                </div>
+            </div>
+
+            <div className="info-sections-landing">
+                 <div className="info-card-landing">
+                    <h2 className="info-title-landing">주요 기능</h2>
+                    <div className="features-grid">
+                        {featuresData.map((feature, index) => (
+                            <div className="feature-item" key={index}>
+                                <div className="feature-icon">{feature.icon}</div>
+                                <div className="feature-text">
+                                    <h3>{feature.title}</h3>
+                                    <p>{feature.description}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="info-card-landing">
+                    <h2 className="info-title-landing">활용 가이드</h2>
+                    <div className="guide-steps">
+                        <div className="guide-step">
+                            <span className="step-number">1</span>
+                            <p><strong>학급 개설</strong><br/>새 학급을 만들어 활동 기간과 시드머니를 설정합니다.</p>
+                        </div>
+                        <div className="guide-step">
+                            <span className="step-number">2</span>
+                            <p><strong>코드 공유</strong><br/>생성된 '참여 코드'를 학생들에게 공유하여 참여시킵니다.</p>
+                        </div>
+                        <div className="guide-step">
+                            <span className="step-number">3</span>
+                            <p><strong>학습 시작</strong><br/>랭킹과 포트폴리오를 보며 즐거운 투자 학습을 진행합니다.</p>
+                        </div>
+                         <div className="guide-step">
+                            <span className="step-number">4</span>
+                            <p><strong>학습 독려</strong><br/>과제 보상 등 추가 시드머니를 지급하며 학생 참여를 독려합니다.</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="info-card-landing">
+                    <h2 className="info-title-landing">자주 묻는 질문</h2>
+                    <div className="faq-list">
+                    {faqData.map((item, index) => (
+                        <div className="faq-item" key={index}>
+                            <button className="faq-question" onClick={() => setActiveFaq(activeFaq === index ? null : index)}>
+                                <span>{item.q}</span>
+                                <span className="faq-icon">{activeFaq === index ? '−' : '+'}</span>
+                            </button>
+                            <div className={`faq-answer ${activeFaq === index ? 'open' : ''}`}>
+                               <p>{item.a}</p>
+                            </div>
+                        </div>
+                    ))}
+                    </div>
+                </div>
+            </div>
+
+             <footer className="footer">
+                <button onClick={() => openPolicy('terms')} className="footer-link">이용약관</button>
+                <button onClick={() => openPolicy('privacy')} className="footer-link">개인정보처리방침</button>
+            </footer>
+            <div style={{ position: 'absolute', bottom: '1rem', right: '1rem' }}>
+                <button
+                    onClick={() => onSelectRole('teacher_dashboard')}
+                    style={{ background: '#ffc107', color: 'black', border: 'none', borderRadius: '8px', width: '50px', height: '30px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', }}
+                    title="개발자용 바로가기" aria-label="개발자용 대시보드 바로가기"
+                > DEV </button>
+            </div>
+            {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
+            {activeModal === 'student' && <StudentLoginModal onClose={() => setActiveModal(null)} onRegister={onStudentRegister} onLogin={onStudentLogin} />}
+            {activeModal === 'teacher' && <TeacherLoginModal onClose={() => setActiveModal(null)} onLoginSuccess={onTeacherLogin} />}
+        </div>
+    );
+};
+
+export default LandingPage;

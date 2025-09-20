@@ -1,0 +1,70 @@
+import React, { useState } from 'react';
+import { termsOfService, privacyPolicy } from '../../data';
+import PolicyModal from '../shared/PolicyModal';
+
+interface TeacherLoginModalProps {
+    onClose: () => void;
+    onLoginSuccess: () => void;
+}
+const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginSuccess }) => {
+    const [isLogin, setIsLogin] = useState(true);
+    const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
+    
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onLoginSuccess();
+    };
+    
+    const handleGoogleAuth = () => {
+        onLoginSuccess();
+    };
+
+    const openPolicy = (type: 'terms' | 'privacy') => {
+        if (type === 'terms') {
+            setPolicyModal({ title: '이용약관', content: termsOfService });
+        } else {
+            setPolicyModal({ title: '개인정보처리방침', content: privacyPolicy });
+        }
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <header className="modal-header">
+                    <h2>{isLogin ? '교사 로그인' : '교사 회원가입'}</h2>
+                    <button onClick={onClose} className="close-button" aria-label="닫기">&times;</button>
+                </header>
+                <p style={{marginTop:0, marginBottom: '1rem'}}>서비스를 이용하시려면 {isLogin ? '로그인이' : '회원가입이'} 필요합니다.</p>
+                
+                <button type="button" className="button button-google" onClick={handleGoogleAuth} style={{ width: '100%', marginBottom: '0.5rem' }}>
+                    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" style={{ verticalAlign: 'middle', marginRight: '10px' }}>
+                        <path d="M17.64 9.20455C17.64 8.56591 17.5827 7.95273 17.4764 7.36364H9V10.8455H13.8436C13.6345 11.9705 12.9982 12.9236 12.0664 13.5673V15.8264H15.0145C16.7127 14.2618 17.64 11.9545 17.64 9.20455Z" fill="#4285F4"></path>
+                        <path d="M9 18C11.43 18 13.4673 17.1945 14.9564 15.8264L12.0082 13.5673C11.1927 14.1127 10.1564 14.44 9 14.44C6.65455 14.44 4.66364 12.9045 3.95 10.7773H0.954545V13.0455C2.45455 15.9091 5.48182 18 9 18Z" fill="#34A853"></path>
+                        <path d="M3.95 10.7773C3.81 10.3573 3.73 9.91727 3.73 9.45C3.73 8.98273 3.81 8.54273 3.95 8.12273V5.85455H0.954545C0.347273 7.10909 0 8.25 0 9.45C0 10.65 0.347273 11.7909 0.954545 13.0455L3.95 10.7773Z" fill="#FBBC05"></path>
+                        <path d="M9 3.54545C10.3227 3.54545 11.5073 4 12.44 4.89545L15.0145 2.32182C13.4636 0.886364 11.43 0 9 0C5.48182 0 2.45455 1.90909 0.954545 4.63636L3.95 6.90455C4.66364 4.77727 6.65455 3.54545 9 3.54545Z" fill="#EA4335"></path>
+                    </svg>
+                    Google 계정으로 {isLogin ? '로그인' : '회원가입'}
+                </button>
+                <div className="divider"><span>또는</span></div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="input-group"><input type="email" className="input-field" placeholder="이메일 주소" aria-label="이메일 주소" required /></div>
+                    <div className="input-group"><input type="password" className="input-field" placeholder="비밀번호" aria-label="비밀번호" required /></div>
+                    
+                    {!isLogin && (
+                        <p className="agreement-text" style={{textAlign: 'center', marginBottom: '1.5rem'}}>
+                            계속하면 ClassStock의 <button type="button" className="inline-link" onClick={() => openPolicy('terms')}>이용약관</button> 및 <br/>
+                            <button type="button" className="inline-link" onClick={() => openPolicy('privacy')}>개인정보처리방침</button>에 동의하는 것으로 간주됩니다.
+                        </p>
+                    )}
+                    
+                    <button type="submit" className="button" style={{ width: '100%', marginBottom: '1rem' }}>{isLogin ? '로그인' : '회원가입'}</button>
+                </form>
+                <p style={{ fontSize: '0.9rem', color: '#666', cursor: 'pointer', margin: 0 }} onClick={() => setIsLogin(!isLogin)}>{isLogin ? '계정이 없으신가요? 회원가입' : '이미 계정이 있으신가요? 로그인'}</p>
+                {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
+            </div>
+        </div>
+    );
+};
+
+export default TeacherLoginModal;
