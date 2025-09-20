@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -253,26 +252,29 @@ const App: React.FC = () => {
         const studentIndex = students.findIndex(s => s.id === studentId);
         const stock = stocks.find(s => s.code === stockCode);
         if (studentIndex === -1 || !stock) return;
-
-        const student = { ...students[studentIndex] };
-        const studentClass = classes.find(c => c.id === student.classId);
-
+    
+        const originalStudent = students[studentIndex];
+        const studentClass = classes.find(c => c.id === originalStudent.classId);
+    
         if (!isActivityActive(studentClass)) {
             addToast('현재는 활동 기간이 아닙니다.', 'error');
             return;
         }
-        
-        const updatedStudents = [...students];
-
+    
+        const student = { ...originalStudent, portfolio: [...originalStudent.portfolio] };
+    
         let commission = 0;
         if (studentClass && studentClass.hasCommission) {
             commission = stock.price * quantity * (studentClass.commissionRate / 100);
         }
-
+    
         if (type === 'buy') {
             const totalCost = stock.price * quantity + commission;
-            if (student.cash < totalCost) { addToast('현금이 부족합니다.', 'error'); return; }
-            
+            if (student.cash < totalCost) {
+                addToast('현금이 부족합니다.', 'error');
+                return;
+            }
+    
             student.cash -= totalCost;
             const existingHoldingIndex = student.portfolio.findIndex(p => p.stockCode === stockCode);
             if (existingHoldingIndex > -1) {
@@ -284,17 +286,27 @@ const App: React.FC = () => {
                 student.portfolio.push({ stockCode, quantity, averagePrice: stock.price });
             }
         } else { // sell
-            const existingHolding = student.portfolio.find(p => p.stockCode === stockCode);
-            if (!existingHolding || existingHolding.quantity < quantity) { addToast('보유 수량이 부족합니다.', 'error'); return; }
-
+            const existingHoldingIndex = student.portfolio.findIndex(p => p.stockCode === stockCode);
+            const existingHolding = existingHoldingIndex > -1 ? student.portfolio[existingHoldingIndex] : null;
+            if (!existingHolding || existingHolding.quantity < quantity) {
+                addToast('보유 수량이 부족합니다.', 'error');
+                return;
+            }
+    
             student.cash += (stock.price * quantity) - commission;
-            existingHolding.quantity -= quantity;
-            student.portfolio = student.portfolio.filter(p => p.quantity > 0);
+            const newQuantity = existingHolding.quantity - quantity;
+            
+            if (newQuantity > 0) {
+                 student.portfolio[existingHoldingIndex] = { ...existingHolding, quantity: newQuantity };
+            } else {
+                student.portfolio = student.portfolio.filter(p => p.stockCode !== stockCode);
+            }
         }
-
+    
+        const updatedStudents = [...students];
         updatedStudents[studentIndex] = student;
         setStudents(updatedStudents);
-
+    
         const newTransaction: Transaction = {
             id: `T${Date.now()}`, studentId, stockCode, stockName: stock.name, type, quantity, price: stock.price, timestamp: Date.now()
         };
@@ -1069,17 +1081,19 @@ const StudentPortfolioModal: React.FC<StudentPortfolioModalProps> = ({ student, 
                 <h4>보유 주식</h4>
                 <div className="data-list" style={{ maxHeight: '250px' }}>
                     {fullPortfolio.length > 0 ? fullPortfolio.map(p => p && (
-                        <div key={p.stockCode} className="portfolio-card">
-                             <div className="portfolio-card-header">
-                                <span>{p.stock.name} ({p.stock.price.toLocaleString()}원)</span>
-                                <span className={p.profit > 0 ? 'price-info positive' : p.profit < 0 ? 'price-info negative' : 'price-info neutral'}>
-                                    {p.profit.toLocaleString()}원 ({p.profitRate.toFixed(2)}%)
-                                </span>
+                        <div key={p.stockCode} className="portfolio-item-card">
+                             <div className="portfolio-item-info">
+                                <div className="item-name">{p.stock.name}<small>({p.stock.code})</small></div>
+                                <div className="portfolio-item-details">
+                                    <div className="detail-group"><span>평가액</span><span className="detail-value">{p.currentValue.toLocaleString()}원</span></div>
+                                    <div className="detail-group"><span>보유/매입가</span><span className="detail-value">{p.quantity}주 / {p.averagePrice.toLocaleString()}원</span></div>
+                                </div>
                             </div>
-                            <div className="portfolio-card-body" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                                <span>평가액: {p.currentValue.toLocaleString()}원</span>
-                                <span>보유수량: {p.quantity}주</span>
-                                <span>매입가: {p.averagePrice.toLocaleString()}원</span>
+                            <div className="portfolio-item-profit">
+                                <div className={`profit-amount ${p.profit > 0 ? 'positive' : p.profit < 0 ? 'negative' : 'neutral'}`}>
+                                    {p.profit > 0 ? '▲' : p.profit < 0 ? '▼' : ''} {Math.abs(p.profit).toLocaleString()}원
+                                </div>
+                                <div className={`profit-rate ${p.profit > 0 ? 'positive' : p.profit < 0 ? 'negative' : 'neutral'}`}>({p.profitRate.toFixed(2)}%)</div>
                             </div>
                         </div>
                     )) : <p style={{ textAlign: 'center', color: '#666' }}>보유 주식이 없습니다.</p>}
@@ -1248,20 +1262,34 @@ interface StudentDashboardProps {
     onLogout: () => void;
     isTradingActive: boolean;
 }
+const PIE_CHART_COLORS = ['#4A90E2', '#50E3C2', '#F5A623', '#BD10E0', '#7ED321', '#F8E71C', '#9013FE', '#B8E986', '#417505', '#E02020'];
+
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo, stocks, transactions, classRanking, onTrade, onLogout, isTradingActive }) => {
     const [activeTab, setActiveTab] = useState('portfolio');
     const [tradeInfo, setTradeInfo] = useState<TradeInfo | null>(null);
     const { totalAssets, cash, portfolio } = student;
     const stockAssets = totalAssets - cash;
 
-    const fullPortfolio = useMemo(() => portfolio.map(item => {
-        const stock = stocks.find(s => s.code === item.stockCode);
-        if (!stock) return null;
-        const currentValue = stock.price * item.quantity;
-        const profit = (stock.price - item.averagePrice) * item.quantity;
-        const profitRate = item.averagePrice > 0 ? (profit / (item.averagePrice * item.quantity)) * 100 : 0;
-        return { ...item, stock, currentValue, profit, profitRate };
-    }).filter(Boolean), [portfolio, stocks]);
+    const fullPortfolio = useMemo(() => {
+        return portfolio.map(item => {
+            const stock = stocks.find(s => s.code === item.stockCode);
+            if (!stock) return null;
+            
+            const currentValue = stock.price * item.quantity;
+            const costBasis = item.averagePrice * item.quantity;
+            const profit = currentValue - costBasis;
+            const profitRate = costBasis > 0 ? (profit / costBasis) * 100 : 0;
+
+            return { 
+                ...item, 
+                stock, 
+                currentValue, 
+                costBasis,
+                profit, 
+                profitRate 
+            };
+        }).filter((p): p is NonNullable<typeof p> => p !== null);
+    }, [portfolio, stocks]);
 
     const allowedStocks = classInfo.allowedStocks.map(code => stocks.find(s => s.code === code)).filter(Boolean) as Stock[];
 
@@ -1288,6 +1316,35 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
     
     const activityStatus = getActivityStatus(classInfo);
 
+    const chartData = useMemo(() => {
+        const data = fullPortfolio.map((p, index) => ({
+            name: p.stock.name,
+            value: p.currentValue,
+            color: PIE_CHART_COLORS[index % PIE_CHART_COLORS.length],
+        }));
+        
+        data.unshift({ name: '보유 현금', value: cash, color: '#aaa' });
+        
+        return data.filter(d => d.value > 0);
+    }, [fullPortfolio, cash]);
+
+    const conicGradient = useMemo(() => {
+        if (chartData.length === 0) return 'transparent';
+        const totalValue = chartData.reduce((acc, item) => acc + item.value, 0);
+        if (totalValue === 0) return '#aaa';
+
+        let currentAngle = 0;
+        const gradientParts = chartData.map(item => {
+            const percentage = (item.value / totalValue) * 360;
+            const startAngle = currentAngle;
+            const endAngle = currentAngle + percentage;
+            currentAngle = endAngle;
+            return `${item.color} ${startAngle}deg ${endAngle}deg`;
+        });
+        
+        return `conic-gradient(${gradientParts.join(', ')})`;
+    }, [chartData]);
+
     return (
         <div className="container">
             <header className="dashboard-header">
@@ -1313,23 +1370,87 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
             </div>
             <div className="tab-content" style={{minHeight: '200px'}}>
                 {activeTab === 'portfolio' && (
-                    <div className="info-section">{fullPortfolio.length > 0 ? fullPortfolio.map(p => p && (
-                        <div key={p.stockCode} className="portfolio-card">
-                            <div className="portfolio-card-header"><span>{p.stock.name} ({p.stock.price.toLocaleString()}원)</span><span className={p.profit > 0 ? 'price-info positive' : p.profit < 0 ? 'price-info negative' : 'price-info neutral'}>{p.profit.toLocaleString()}원 ({p.profitRate.toFixed(2)}%)</span></div>
-                            <div className="portfolio-card-body">
-                                <span>평가액: {p.currentValue.toLocaleString()}원</span><span>보유수량: {p.quantity}주</span>
-                                <span>매입가: {p.averagePrice.toLocaleString()}원</span><span><button onClick={() => setTradeInfo({ type: 'sell', stock: p.stock })} className="button button-sell" style={{width: 'auto', padding: '0.2rem 0.6rem', fontSize:'0.8rem'}} disabled={!isTradingActive}>매도</button></span>
+                    <div className="info-section">
+                        <div className="portfolio-overview">
+                            <div className="pie-chart-container">
+                                <div 
+                                    className="pie-chart"
+                                    style={{ background: conicGradient }}
+                                    role="img"
+                                    aria-label={`자산 구성: ${chartData.map(d => `${d.name} ${((d.value/totalAssets)*100).toFixed(1)}%`).join(', ')}`}
+                                ></div>
                             </div>
+                            <ul className="pie-chart-legend">
+                                {chartData.map(item => (
+                                    <li key={item.name} className="legend-item">
+                                        <div className="legend-color-box" style={{ backgroundColor: item.color }}></div>
+                                        <div className="legend-text">
+                                            <strong>{item.name}</strong>
+                                            <span>{item.value.toLocaleString()}원</span>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
-                    )) : <div className="info-card" style={{textAlign: 'center'}}><p>현재 보유 주식이 없습니다.</p></div>}</div>
+                        {fullPortfolio.length > 0 ? fullPortfolio.map(p => {
+                            if (!p) return null;
+                            const profitClass = p.profit > 0 ? 'positive' : p.profit < 0 ? 'negative' : 'neutral';
+                            return (
+                                <div key={p.stockCode} className="portfolio-item-card">
+                                    {/* Left Side: Purchase Info */}
+                                    <div className="portfolio-item-info">
+                                        <div className="item-name">
+                                            {p.stock.name}
+                                            <small>({p.stock.code})</small>
+                                        </div>
+                                        <div className="portfolio-item-details">
+                                            <div className="detail-group">
+                                                <span>총 매입금</span>
+                                                <span className="detail-value">{p.costBasis.toLocaleString()}원</span>
+                                            </div>
+                                            <div className="detail-group">
+                                                <span>보유 수량</span>
+                                                <span className="detail-value">{p.quantity.toLocaleString()}주</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* Right Side: Performance Info */}
+                                    <div className={`portfolio-item-performance ${profitClass}`}>
+                                        <div className="current-valuation">
+                                            {p.currentValue.toLocaleString()}원
+                                        </div>
+                                        <div className="profit-summary">
+                                            <div className="profit-amount">
+                                                {p.profit > 0 ? '▲' : p.profit < 0 ? '▼' : ''} {Math.abs(p.profit).toLocaleString()}원
+                                            </div>
+                                            <div className="profit-rate">
+                                                ({p.profitRate.toFixed(2)}%)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }) : <div className="info-card" style={{textAlign: 'center'}}><p>현재 보유 주식이 없습니다.</p></div>}
+                    </div>
                 )}
-                {activeTab === 'market' && <ul className="data-list">{allowedStocks.map(stock => (
-                    <li key={stock.code} className="data-list-item">
-                        <div className="stock-info"><span>{stock.name}</span><small>{stock.code}</small></div>
-                        <div className="price-info"><span>{stock.price.toLocaleString()}원</span></div>
-                        <button onClick={() => setTradeInfo({ type: 'buy', stock })} className="button button-buy" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}} disabled={!isTradingActive}>매수</button>
-                    </li>
-                ))}</ul>}
+                {activeTab === 'market' && <ul className="data-list">{allowedStocks.map(stock => {
+                    const ownedStock = portfolio.find(p => p.stockCode === stock.code);
+                    const canSell = ownedStock && ownedStock.quantity > 0;
+                    return (
+                        <li key={stock.code} className="data-list-item">
+                            <div className="stock-info">
+                                <span>{stock.name}</span>
+                                <small>{stock.code}</small>
+                                {canSell && <small style={{ color: 'var(--negative-color)', fontWeight: 500 }}>보유: {ownedStock.quantity}주</small>}
+                            </div>
+                            <div className="price-info"><span>{stock.price.toLocaleString()}원</span></div>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button onClick={() => setTradeInfo({ type: 'sell', stock })} className="button button-sell" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}} disabled={!isTradingActive || !canSell}>매도</button>
+                                <button onClick={() => setTradeInfo({ type: 'buy', stock })} className="button button-buy" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}} disabled={!isTradingActive}>매수</button>
+                            </div>
+                        </li>
+                    );
+                })}</ul>}
                 {activeTab === 'history' && <ul className="data-list">{transactions.length > 0 ? transactions.map(t => (
                     <li key={t.id} className="data-list-item">
                          {t.type === 'bonus' ? (

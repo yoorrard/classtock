@@ -582,28 +582,133 @@
         .price-info.neutral { color: var(--text-color); }
         .profit { font-size: 0.8rem; }
         
-        .portfolio-card {
-            background: #fff;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 0.75rem;
-            border: 1px solid #eee;
+        /* Portfolio Pie Chart & New Cards */
+        .portfolio-overview {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            background-color: var(--background-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
         }
-        .portfolio-card-header {
+
+        .pie-chart-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+
+        .pie-chart {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .pie-chart-legend {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: left;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        .legend-color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            margin-right: 0.75rem;
+            flex-shrink: 0;
+        }
+        .legend-text {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            font-weight: 700;
-        }
-        .portfolio-card-body {
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 0.5rem;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            flex-grow: 1;
+            flex-wrap: wrap;
             gap: 0.5rem;
         }
+        .legend-text strong {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .legend-text span {
+            color: #333;
+            font-weight: 700;
+        }
+
+        .portfolio-item-card {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            border: 1px solid #e8eaf1;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .portfolio-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: left;
+        }
+        .portfolio-item-info .item-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+        .item-name small {
+            font-weight: 400;
+            color: #666;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }
+        .portfolio-item-details {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: #555;
+            flex-wrap: wrap;
+        }
+        .detail-group span { display: block; line-height: 1.4; }
+        .detail-group .detail-value { color: var(--text-color); font-weight: 500; }
         
+        .portfolio-item-performance {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .portfolio-item-performance.positive { color: var(--positive-color); }
+        .portfolio-item-performance.negative { color: var(--negative-color); }
+        .portfolio-item-performance.neutral { color: var(--text-color); }
+        
+        .current-valuation {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--text-color); /* Keep valuation color neutral as it's a primary figure */
+        }
+        
+        .profit-summary {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.1rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
         .ranking-list-item .rank {
             font-weight: 700;
             font-size: 1.2rem;
@@ -925,6 +1030,14 @@
                 left: 10px;
                 width: auto;
             }
+            .portfolio-overview {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            .pie-chart-container {
+                width: 100px;
+                height: 100px;
+            }
         }
         
         /* --- Responsive Styles for Wider Screens --- */
@@ -964,11 +1077,6 @@
                 gap: 1rem;
             }
 
-            /* Student Dashboard Portfolio Card */
-            .portfolio-card-body {
-                grid-template-columns: repeat(4, 1fr);
-                align-items: center;
-            }
         }
 
 
