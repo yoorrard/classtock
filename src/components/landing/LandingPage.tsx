@@ -126,7 +126,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                 <div className="info-card-landing">
                     <h2 className="info-title-landing">
                         <span>새로운 소식</span>
-                        <button className="inline-link more-link" onClick={() => onNavigate('notice_board')}>더보기</button>
+                        <button className="button-more" onClick={() => onNavigate('notice_board')}>더보기</button>
                     </h2>
                     <div className="faq-list" style={{border: 'none'}}>
                        {latestNotices.map(notice => (
