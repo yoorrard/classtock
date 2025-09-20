@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -12,6 +13,8 @@ interface ClassInfo {
     endDate: string;
     seedMoney: number;
     allowedStocks: string[]; // Array of stock codes
+    hasCommission: boolean;
+    commissionRate: number; // e.g. 0.1 for 0.1%
 }
 interface PortfolioItem { stockCode: string; quantity: number; averagePrice: number; }
 interface StudentInfo {
@@ -39,16 +42,25 @@ interface TradeInfo { type: TradeType; stock: Stock; }
 
 // --- MOCK DATA ---
 const mockStockData: Stock[] = [
-    { code: '005930', name: '삼성전자', price: 81000 },
+    // Recommended
+    { code: '005930', name: '삼성전자', price: 81000 }, // IT / 전기전자
+    { code: '005380', name: '현대차', price: 250000 }, // 자동차
+    { code: '051910', name: 'LG화학', price: 450000 }, // 화학 / 2차전지
+    { code: '035420', name: 'NAVER', price: 190000 }, // 인터넷 / 플랫폼
+    { code: '068270', name: '셀트리온', price: 180000 }, // 바이오 / 제약
+    { code: '005490', name: 'POSCO홀딩스', price: 400000 }, // 철강 / 소재
+    { code: '105560', name: 'KB금융', price: 78000 }, // 금융
+    { code: '003490', name: '대한항공', price: 22000 }, // 운송
+    { code: '097950', name: 'CJ제일제당', price: 300000 }, // 식음료
+    { code: '329180', name: 'HD현대중공업', price: 135000 }, // 조선 / 중공업
+    
+    // Others for variety
     { code: '000660', name: 'SK하이닉스', price: 180000 },
-    { code: '051910', name: 'LG화학', price: 450000 },
-    { code: '005380', name: '현대차', price: 250000 },
-    { code: '035420', name: 'NAVER', price: 190000 },
     { code: '035720', name: '카카오', price: 50000 },
     { code: '207940', name: '삼성바이오로직스', price: 800000 },
-    { code: '068270', name: '셀트리온', price: 180000 },
-    { code: '005490', name: 'POSCO홀딩스', price: 400000 },
     { code: '028260', name: '삼성물산', price: 130000 },
+    { code: '003550', name: 'LG', price: 95000 }, // 지주사
+    { code: '017670', name: 'SK텔레콤', price: 51000 }, // 통신
 ];
 
 const App: React.FC = () => {
@@ -122,6 +134,16 @@ const App: React.FC = () => {
 
 
     // --- HELPER FUNCTIONS ---
+    const isActivityActive = (classInfo: ClassInfo | null): boolean => {
+        if (!classInfo || !classInfo.startDate || !classInfo.endDate) return false;
+        
+        const now = new Date();
+        const startDate = new Date(`${classInfo.startDate}T00:00:00+09:00`); 
+        const endDate = new Date(`${classInfo.endDate}T23:59:59+09:00`); 
+        
+        return now >= startDate && now <= endDate;
+    };
+
     const calculateTotalAssets = (student: StudentInfo, currentStocks: Stock[]): number => {
         const stockValue = student.portfolio.reduce((acc, item) => {
             const stock = currentStocks.find(s => s.code === item.stockCode);
@@ -132,8 +154,22 @@ const App: React.FC = () => {
 
     // --- HANDLER FUNCTIONS ---
     const handleCreateClass = (newClassData: Omit<ClassInfo, 'id' | 'allowedStocks'>) => {
-        const newClass: ClassInfo = { id: `C${Date.now()}`, allowedStocks: [], ...newClassData, };
+        if (classes.length >= 2) {
+            alert('학급은 최대 2개까지만 생성할 수 있습니다.');
+            return;
+        }
+        const newClass: ClassInfo = { id: `C${Date.now()}`, allowedStocks: [], ...newClassData };
         setClasses(prev => [...prev, newClass]);
+    };
+
+    const handleDeleteClass = (classId: string) => {
+        const studentIdsToDelete = students
+            .filter(s => s.classId === classId)
+            .map(s => s.id);
+
+        setClasses(prev => prev.filter(c => c.id !== classId));
+        setStudents(prev => prev.filter(s => s.classId !== classId));
+        setTransactions(prev => prev.filter(t => !studentIdsToDelete.includes(t.studentId)));
     };
 
     const handleSelectClass = (classId: string) => {
@@ -198,9 +234,20 @@ const App: React.FC = () => {
         const stock = stocks.find(s => s.code === stockCode);
         if (studentIndex === -1 || !stock) return;
 
+        const student = { ...students[studentIndex] };
+        const studentClass = classes.find(c => c.id === student.classId);
+
+        if (!isActivityActive(studentClass)) {
+            alert('현재는 활동 기간이 아닙니다.');
+            return;
+        }
+        
         const updatedStudents = [...students];
-        const student = { ...updatedStudents[studentIndex] };
-        const commission = stock.price * quantity * 0.001;
+
+        let commission = 0;
+        if (studentClass && studentClass.hasCommission) {
+            commission = stock.price * quantity * (studentClass.commissionRate / 100);
+        }
 
         if (type === 'buy') {
             const totalCost = stock.price * quantity + commission;
@@ -276,6 +323,7 @@ const App: React.FC = () => {
                     classes={classes}
                     onCreateClass={handleCreateClass}
                     onSelectClass={handleSelectClass}
+                    onDeleteClass={handleDeleteClass}
                 />;
             case 'class_detail':
                  if (!selectedClass) { setView('teacher_dashboard'); return null; }
@@ -306,6 +354,7 @@ const App: React.FC = () => {
                     classRanking={classStudentsForRanking}
                     onTrade={handleTrade}
                     onLogout={handleLogout}
+                    isTradingActive={isActivityActive(studentClass)}
                 />;
             case 'landing':
             default: return <LandingPage
@@ -321,6 +370,29 @@ const App: React.FC = () => {
 };
 
 // --- COMPONENTS ---
+
+const DeleteConfirmationModal: React.FC<{
+    classInfo: ClassInfo;
+    onClose: () => void;
+    onConfirm: () => void;
+}> = ({ classInfo, onClose, onConfirm }) => {
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <header className="modal-header">
+                    <h2 style={{ color: 'var(--positive-color)' }}>학급 삭제 확인</h2>
+                    <button onClick={onClose} className="close-button" aria-label="닫기">&times;</button>
+                </header>
+                <p><strong>"{classInfo.name}"</strong> 학급을 정말로 삭제하시겠습니까?</p>
+                <p style={{ color: '#555', fontSize: '0.9rem' }}>이 작업은 되돌릴 수 없으며, 학급에 속한 모든 학생 데이터와 거래 내역이 영구적으로 삭제됩니다.</p>
+                <div className="action-buttons" style={{ marginTop: '2rem' }}>
+                    <button type="button" className="button button-secondary" onClick={onClose}>취소</button>
+                    <button type="button" className="button button-danger" onClick={onConfirm}>삭제하기</button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const PolicyModal: React.FC<{ title: string; content: string; onClose: () => void; }> = ({ title, content, onClose }) => {
     return (
@@ -608,14 +680,31 @@ interface PortalProps { onBack: () => void; }
 
 interface CreateClassModalProps { onClose: () => void; onCreate: (newClass: Omit<ClassInfo, 'id' | 'allowedStocks'>) => void; }
 const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onCreate }) => {
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [dateError, setDateError] = useState('');
+    const [applyCommission, setApplyCommission] = useState(true);
+    const [commissionRate, setCommissionRate] = useState('0.1');
+    const today = new Date().toISOString().split('T')[0];
+
+    const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newStartDate = e.target.value;
+        setStartDate(newStartDate);
+        setDateError('');
+        if (endDate && newStartDate > endDate) {
+            setEndDate('');
+        }
+    };
+    
+    const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEndDate(e.target.value);
+        setDateError('');
+    };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-        const startDate = formData.get('startDate') as string;
-        const endDate = formData.get('endDate') as string;
-
+        
         if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
             setDateError('종료일을 시작일 이후로 입력하세요.');
             return;
@@ -626,6 +715,8 @@ const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onCreate }
             startDate,
             endDate,
             seedMoney: Number(formData.get('seedMoney')),
+            hasCommission: applyCommission,
+            commissionRate: applyCommission ? Number(commissionRate) : 0,
         };
         onCreate(newClass);
     };
@@ -637,32 +728,76 @@ const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onCreate }
                 <form onSubmit={handleSubmit}>
                     <div className="input-group"><label htmlFor="className">학급 이름</label><input id="className" name="className" type="text" className="input-field" placeholder="예: 1학년 1반 금융 교실" required /></div>
                     <div className="input-group-row">
-                        <div className="input-group"><label htmlFor="startDate">활동 시작일</label><input id="startDate" name="startDate" type="date" className="input-field" onChange={() => setDateError('')} required /></div>
-                        <div className="input-group"><label htmlFor="endDate">활동 종료일</label><input id="endDate" name="endDate" type="date" className="input-field" onChange={() => setDateError('')} required /></div>
+                        <div className="input-group">
+                            <label htmlFor="startDate">활동 시작일</label>
+                            <input id="startDate" name="startDate" type="date" className="input-field" min={today} value={startDate} onChange={handleStartDateChange} required />
+                        </div>
+                        <div className="input-group">
+                            <label htmlFor="endDate">활동 종료일</label>
+                            <input id="endDate" name="endDate" type="date" className="input-field" min={startDate || today} value={endDate} onChange={handleEndDateChange} required />
+                        </div>
                     </div>
                     {dateError && <p className="error-message">{dateError}</p>}
                     <div className="input-group"><label htmlFor="seedMoney">초기 시드머니</label><input id="seedMoney" name="seedMoney" type="number" className="input-field" placeholder="예: 1000000" required /></div>
+                    
+                    <div className="input-group">
+                        <label>거래 수수료 설정</label>
+                        <div className="checkbox-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f7f9fc', padding: '0.75rem', borderRadius: '8px' }}>
+                            <input id="applyCommission" name="applyCommission" type="checkbox" style={{width: '16px', height: '16px'}} checked={applyCommission} onChange={e => setApplyCommission(e.target.checked)} />
+                            <label htmlFor="applyCommission" style={{ marginBottom: 0, fontWeight: 'normal' }}>거래 수수료 적용</label>
+                        </div>
+                    </div>
+
+                    {applyCommission && (
+                        <div className="input-group">
+                            <label htmlFor="commissionRate">거래 수수료율 (%)</label>
+                            <input id="commissionRate" name="commissionRate" type="text" inputMode="decimal" className="input-field" placeholder="예: 0.1" value={commissionRate} onChange={e => setCommissionRate(e.target.value)} required />
+                        </div>
+                    )}
+
                     <div className="action-buttons"><button type="button" className="button button-secondary" onClick={onClose}>취소</button><button type="submit" className="button">생성하기</button></div>
                 </form>
             </div>
         </div>
     );
 };
-const ClassCard: React.FC<{ classInfo: ClassInfo; onManage: () => void; }> = ({ classInfo, onManage }) => {
+
+const ClassCard: React.FC<{ classInfo: ClassInfo; onManage: () => void; onDelete: () => void; }> = ({ classInfo, onManage, onDelete }) => {
     return (
         <div className="class-card">
             <h3>{classInfo.name}</h3>
             <p><strong>기간:</strong> {classInfo.startDate} ~ {classInfo.endDate}</p>
             <p><strong>초기 시드머니:</strong> {classInfo.seedMoney.toLocaleString()}원</p>
-            <button onClick={onManage} className="button" style={{width: 'auto', padding: '0.5rem 1rem', fontSize: '0.9rem', float: 'right'}}>학급 관리</button>
+            <p><strong>거래 수수료:</strong> {classInfo.hasCommission ? `${classInfo.commissionRate}%` : '없음'}</p>
+            <div className="class-card-actions">
+                <button onClick={onDelete} className="button button-danger" style={{width: 'auto', padding: '0.5rem 1rem', fontSize: '0.9rem'}}>삭제</button>
+                <button onClick={onManage} className="button button-manage" style={{width: 'auto', padding: '0.5rem 1rem', fontSize: '0.9rem'}}>학급 관리</button>
+            </div>
         </div>
     );
 };
-interface TeacherDashboardProps extends PortalProps { classes: ClassInfo[]; onCreateClass: (newClassData: Omit<ClassInfo, 'id' | 'allowedStocks'>) => void; onSelectClass: (classId: string) => void; }
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, onCreateClass, onSelectClass }) => {
+interface TeacherDashboardProps extends PortalProps {
+    classes: ClassInfo[];
+    onCreateClass: (newClassData: Omit<ClassInfo, 'id' | 'allowedStocks'>) => void;
+    onSelectClass: (classId: string) => void;
+    onDeleteClass: (classId: string) => void;
+}
+const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, onCreateClass, onSelectClass, onDeleteClass }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [classToDelete, setClassToDelete] = useState<ClassInfo | null>(null);
+
     const handleCreate = (newClassData: Omit<ClassInfo, 'id' | 'allowedStocks'>) => { onCreateClass(newClassData); setIsModalOpen(false); };
+    
+    const handleDeleteConfirm = () => {
+        if (classToDelete) {
+            onDeleteClass(classToDelete.id);
+            setClassToDelete(null);
+        }
+    };
+    
     const hasClasses = classes.length > 0;
+    const isClassLimitReached = classes.length >= 2;
+
     return (
         <div className="container">
             <header className="header" style={{ marginBottom: '2rem', textAlign: 'left' }}>
@@ -672,20 +807,46 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, on
                         <p style={{ margin: '0.25rem 0 0 0' }}>{hasClasses ? '내 학급 목록입니다.' : '학급을 만들고 관리하세요.'}</p>
                     </div>
                     <div style={{display: 'flex', gap: '0.5rem'}}>
-                        {hasClasses && (<button onClick={() => setIsModalOpen(true)} className="button" style={{ width: 'auto', padding: '0.5rem 1rem' }}>+ 새 학급</button>)}
+                        {hasClasses && (<button 
+                            onClick={() => setIsModalOpen(true)} 
+                            className="button" 
+                            style={{ width: 'auto', padding: '0.5rem 1rem' }}
+                            disabled={isClassLimitReached}
+                            title={isClassLimitReached ? '학급은 최대 2개까지 생성할 수 있습니다.' : '새로운 학급을 만듭니다.'}
+                        >
+                            + 새 학급
+                        </button>)}
                         <button onClick={onBack} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>로그아웃</button>
                     </div>
                 </div>
             </header>
             {hasClasses ? (
-                <div className="class-list">{classes.map(c => <ClassCard key={c.id} classInfo={c} onManage={() => onSelectClass(c.id)} />)}</div>
+                <div className="class-list">
+                    {classes.map(c => 
+                        <ClassCard 
+                            key={c.id} 
+                            classInfo={c} 
+                            onManage={() => onSelectClass(c.id)}
+                            onDelete={() => setClassToDelete(c)}
+                        />
+                    )}
+                </div>
             ) : (
                 <div className="dashboard-content" style={{textAlign: 'center', minHeight: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
                      <p>아직 생성된 학급이 없습니다.</p><p style={{marginBottom: '2rem'}}>새 학급을 만들어 학생들을 초대해보세요!</p>
-                     <button onClick={() => setIsModalOpen(true)} className="button" style={{width: 'auto', padding: '1rem 2rem', alignSelf: 'center'}}>+ 새 학급 만들기</button>
+                     <button 
+                        onClick={() => setIsModalOpen(true)} 
+                        className="button" 
+                        style={{width: 'auto', padding: '1rem 2rem', alignSelf: 'center'}}
+                        disabled={isClassLimitReached}
+                        title={isClassLimitReached ? '학급은 최대 2개까지 생성할 수 있습니다.' : '새로운 학급을 만듭니다.'}
+                    >
+                        + 새 학급 만들기
+                    </button>
                 </div>
             )}
             {isModalOpen && <CreateClassModal onClose={() => setIsModalOpen(false)} onCreate={handleCreate} />}
+            {classToDelete && <DeleteConfirmationModal classInfo={classToDelete} onClose={() => setClassToDelete(null)} onConfirm={handleDeleteConfirm} />}
         </div>
     );
 };
@@ -695,23 +856,48 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, on
 const StockManager: React.FC<{
     allowedStocks: string[];
     allStocks: Stock[];
-    onUpdate: (updatedStockCodes: string[]) => void;
-}> = ({ allowedStocks, allStocks, onUpdate }) => {
+    onSave: (updatedStockCodes: string[]) => void;
+}> = ({ allowedStocks, allStocks, onSave }) => {
+    const [selectedCodes, setSelectedCodes] = useState<string[]>(allowedStocks);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    const recommendedStockCodes = ['005930', '005380', '051910', '035420', '068270', '005490', '105560', '003490', '097950', '329180'];
+
+    useEffect(() => {
+        setSelectedCodes(allowedStocks);
+    }, [allowedStocks]);
+    
     const handleAdd = (code: string) => {
-        if (allowedStocks.length < 10 && !allowedStocks.includes(code)) {
-            onUpdate([...allowedStocks, code]);
+        if (selectedCodes.length < 10 && !selectedCodes.includes(code)) {
+            setSelectedCodes([...selectedCodes, code]);
         }
     };
-    const handleRemove = (code: string) => onUpdate(allowedStocks.filter(c => c !== code));
+    const handleRemove = (code: string) => {
+        setSelectedCodes(selectedCodes.filter(c => c !== code));
+    };
+    const handleRecommend = () => {
+        setSelectedCodes(recommendedStockCodes);
+    };
+
+    const handleSave = () => {
+        onSave(selectedCodes);
+        alert('종목 선택이 완료되어 학생들에게 적용되었습니다.');
+    };
     
-    const searchResults = searchTerm ? allStocks.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.code.includes(searchTerm)) : [];
-    const selectedStockDetails = allowedStocks.map(code => allStocks.find(s => s.code === code)).filter(Boolean) as Stock[];
+    const selectedStockDetails = selectedCodes.map(code => allStocks.find(s => s.code === code)).filter(Boolean) as Stock[];
+    
+    const availableStocks = allStocks.filter(s => 
+        !selectedCodes.includes(s.code) &&
+        (s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.code.includes(searchTerm))
+    );
 
     return (
         <div className="stock-manager-container">
             <div className="info-card">
-                <h4>선택된 종목 ({allowedStocks.length}/10)</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h4>선택된 종목 ({selectedCodes.length}/10)</h4>
+                    <button onClick={handleRecommend} className="button button-secondary" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}}>종목 추천</button>
+                </div>
                 {selectedStockDetails.length > 0 ? (
                     <ul className="data-list">{selectedStockDetails.map(stock => (
                         <li key={stock.code} className="data-list-item">
@@ -719,19 +905,22 @@ const StockManager: React.FC<{
                             <button onClick={() => handleRemove(stock.code)} className="button button-secondary" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}}>제거</button>
                         </li>
                     ))}</ul>
-                ) : <p>선택된 투자 종목이 없습니다.</p>}
+                ) : <p>선택된 투자 종목이 없습니다. '종목 추천'을 이용하거나 아래에서 직접 추가해보세요.</p>}
             </div>
             <div className="info-card">
                 <h4>종목 검색 및 추가</h4>
-                <div className="input-group" style={{marginBottom: '1rem'}}><input type="text" className="input-field" placeholder="종목명 또는 코드 검색" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
-                {searchTerm && (
-                    <ul className="data-list">{searchResults.map(stock => (
-                        <li key={stock.code} className="data-list-item">
-                           <div className="stock-info"><span>{stock.name}</span><small>{stock.code}</small></div>
-                            <button onClick={() => handleAdd(stock.code)} disabled={allowedStocks.includes(stock.code) || allowedStocks.length >= 10} className="button" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}}>추가</button>
-                        </li>
-                    ))}</ul>
-                )}
+                <div className="input-group" style={{marginBottom: '1rem'}}>
+                    <input type="text" className="input-field" placeholder="종목명 또는 코드 검색" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                </div>
+                <ul className="data-list">{availableStocks.map(stock => (
+                    <li key={stock.code} className="data-list-item">
+                       <div className="stock-info"><span>{stock.name}</span><small>{stock.code}</small></div>
+                        <button onClick={() => handleAdd(stock.code)} disabled={selectedCodes.length >= 10} className="button" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}}>추가</button>
+                    </li>
+                ))}</ul>
+            </div>
+            <div className="action-buttons" style={{marginTop: '0.5rem', gridColumn: '1 / -1'}}>
+                <button onClick={handleSave} className="button" style={{width: '100%'}}>선택 완료</button>
             </div>
         </div>
     );
@@ -914,7 +1103,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                 <button className={`tab-button ${activeTab === 'ranking' ? 'active' : ''}`} onClick={() => setActiveTab('ranking')}>랭킹 보드</button>
             </div>
             <div className="tab-content">
-                {activeTab === 'info' && <div className="info-section info-section-grid"><div className="info-card"><h4>학급 참여 코드</h4><p>학생들에게 이 코드를 공유하여 학급에 참여하도록 하세요.</p><div className="join-code-box"><span>{joinCode}</span><button onClick={copyCode} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>복사</button></div></div><div className="info-card"><h4>학급 정보</h4><p><strong>기간:</strong> {classInfo.startDate} ~ {classInfo.endDate}</p><p><strong>초기 시드머니:</strong> {classInfo.seedMoney.toLocaleString()}원</p></div></div>}
+                {activeTab === 'info' && <div className="info-section info-section-grid"><div className="info-card"><h4>학급 참여 코드</h4><p>학생들에게 이 코드를 공유하여 학급에 참여하도록 하세요.</p><div className="join-code-box"><span>{joinCode}</span><button onClick={copyCode} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>복사</button></div></div><div className="info-card"><h4>학급 정보</h4><p><strong>기간:</strong> {classInfo.startDate} ~ {classInfo.endDate}</p><p><strong>초기 시드머니:</strong> {classInfo.seedMoney.toLocaleString()}원</p><p><strong>거래 수수료:</strong> {classInfo.hasCommission ? `${classInfo.commissionRate}%` : '없음'}</p></div></div>}
                 {activeTab === 'students' && <div className="info-section">{students.length > 0 ? (
                     <>
                         <div className="student-management-bar">
@@ -938,7 +1127,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                         ))}</ul>
                     </>
                 ) : <div className="info-card" style={{textAlign: 'center'}}><p>아직 참여한 학생이 없습니다.</p></div>}</div>}
-                {activeTab === 'stocks' && <StockManager allowedStocks={classInfo.allowedStocks} allStocks={allStocks} onUpdate={onUpdateClassStocks} />}
+                {activeTab === 'stocks' && <StockManager allowedStocks={classInfo.allowedStocks} allStocks={allStocks} onSave={onUpdateClassStocks} />}
                 {activeTab === 'ranking' && <RankingBoard students={students} />}
             </div>
              <div className="action-buttons" style={{marginTop: '2rem'}}><button type="button" className="button button-secondary" style={{width: '100%'}} onClick={onBack}>대시보드로 돌아가기</button></div>
@@ -951,17 +1140,22 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
 const TradeModal: React.FC<{
     tradeInfo: TradeInfo;
     student: StudentInfo;
+    classInfo: ClassInfo;
     onClose: () => void;
     onConfirm: (quantity: number) => void;
-}> = ({ tradeInfo, student, onClose, onConfirm }) => {
+}> = ({ tradeInfo, student, classInfo, onClose, onConfirm }) => {
     const { type, stock } = tradeInfo;
     const [quantity, setQuantity] = useState(1);
-    const maxBuy = Math.floor(student.cash / (stock.price * 1.001));
+
+    const commissionRatePercent = classInfo.hasCommission ? classInfo.commissionRate : 0;
+    const commissionRateMultiplier = 1 + (commissionRatePercent / 100);
+
+    const maxBuy = Math.floor(student.cash / (stock.price * commissionRateMultiplier));
     const maxSell = student.portfolio.find(p => p.stockCode === stock.code)?.quantity || 0;
     const maxQuantity = type === 'buy' ? maxBuy : maxSell;
 
     const total = stock.price * quantity;
-    const commission = total * 0.001;
+    const commission = total * (commissionRatePercent / 100);
     const finalAmount = type === 'buy' ? total + commission : total - commission;
     const isConfirmDisabled = quantity <= 0 || quantity > maxQuantity;
 
@@ -979,7 +1173,9 @@ const TradeModal: React.FC<{
                     </div>
                     <div className="trade-summary">
                         <p><span>주문금액</span><span>{total.toLocaleString()}원</span></p>
-                        <p><span>수수료 (0.1%)</span><span>{commission.toLocaleString()}원</span></p>
+                        {classInfo.hasCommission && (
+                            <p><span>수수료 ({commissionRatePercent}%)</span><span>{commission.toLocaleString()}원</span></p>
+                        )}
                         <p><strong>{type === 'buy' ? '총 매수금액' : '총 매도금액'}</strong><strong>{finalAmount.toLocaleString()}원</strong></p>
                     </div>
                     <div className="action-buttons"><button type="button" className="button button-secondary" onClick={onClose}>취소</button><button type="submit" className={`button ${type === 'buy' ? 'button-buy' : 'button-sell'}`} disabled={isConfirmDisabled}>확인</button></div>
@@ -998,8 +1194,9 @@ interface StudentDashboardProps {
     classRanking: (StudentInfo & { totalAssets: number })[];
     onTrade: (studentId: string, stockCode: string, quantity: number, type: TradeType) => void;
     onLogout: () => void;
+    isTradingActive: boolean;
 }
-const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo, stocks, transactions, classRanking, onTrade, onLogout }) => {
+const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo, stocks, transactions, classRanking, onTrade, onLogout, isTradingActive }) => {
     const [activeTab, setActiveTab] = useState('portfolio');
     const [tradeInfo, setTradeInfo] = useState<TradeInfo | null>(null);
     const { totalAssets, cash, portfolio } = student;
@@ -1023,11 +1220,30 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
         }
     };
 
+    const getActivityStatus = (classInfo: ClassInfo): { text: string; color: string } => {
+        const now = new Date();
+        const startDate = new Date(`${classInfo.startDate}T00:00:00+09:00`);
+        const endDate = new Date(`${classInfo.endDate}T23:59:59+09:00`);
+
+        if (now < startDate) {
+            return { text: '활동 전', color: 'var(--bonus-color)' };
+        } else if (now > endDate) {
+            return { text: '활동 종료', color: '#777' };
+        } else {
+            return { text: '활동 중', color: 'var(--secondary-color)' };
+        }
+    };
+    
+    const activityStatus = getActivityStatus(classInfo);
+
     return (
         <div className="container">
             <header className="dashboard-header">
                 <div><h1 style={{ fontSize: '1.8rem', margin: 0 }}>{student.nickname}님</h1><p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>'{classInfo.name}'</p></div>
-                <div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                     <span style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: activityStatus.color, color: '#fff', fontSize: '0.9rem', fontWeight: '500' }}>
+                        {activityStatus.text}
+                     </span>
                      <button onClick={onLogout} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>로그아웃</button>
                 </div>
             </header>
@@ -1050,7 +1266,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                             <div className="portfolio-card-header"><span>{p.stock.name} ({p.stock.price.toLocaleString()}원)</span><span className={p.profit > 0 ? 'price-info positive' : p.profit < 0 ? 'price-info negative' : 'price-info neutral'}>{p.profit.toLocaleString()}원 ({p.profitRate.toFixed(2)}%)</span></div>
                             <div className="portfolio-card-body">
                                 <span>평가액: {p.currentValue.toLocaleString()}원</span><span>보유수량: {p.quantity}주</span>
-                                <span>매입가: {p.averagePrice.toLocaleString()}원</span><span><button onClick={() => setTradeInfo({ type: 'sell', stock: p.stock })} className="button button-sell" style={{width: 'auto', padding: '0.2rem 0.6rem', fontSize:'0.8rem'}}>매도</button></span>
+                                <span>매입가: {p.averagePrice.toLocaleString()}원</span><span><button onClick={() => setTradeInfo({ type: 'sell', stock: p.stock })} className="button button-sell" style={{width: 'auto', padding: '0.2rem 0.6rem', fontSize:'0.8rem'}} disabled={!isTradingActive}>매도</button></span>
                             </div>
                         </div>
                     )) : <div className="info-card" style={{textAlign: 'center'}}><p>현재 보유 주식이 없습니다.</p></div>}</div>
@@ -1059,7 +1275,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                     <li key={stock.code} className="data-list-item">
                         <div className="stock-info"><span>{stock.name}</span><small>{stock.code}</small></div>
                         <div className="price-info"><span>{stock.price.toLocaleString()}원</span></div>
-                        <button onClick={() => setTradeInfo({ type: 'buy', stock })} className="button button-buy" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}}>매수</button>
+                        <button onClick={() => setTradeInfo({ type: 'buy', stock })} className="button button-buy" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}} disabled={!isTradingActive}>매수</button>
                     </li>
                 ))}</ul>}
                 {activeTab === 'history' && <ul className="data-list">{transactions.length > 0 ? transactions.map(t => (
@@ -1083,7 +1299,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                 )) : <div className="info-card" style={{textAlign: 'center'}}><p>거래 내역이 없습니다.</p></div>}</ul>}
                 {activeTab === 'ranking' && <RankingBoard students={classRanking} />}
             </div>
-            {tradeInfo && <TradeModal tradeInfo={tradeInfo} student={student} onClose={() => setTradeInfo(null)} onConfirm={handleConfirmTrade} />}
+            {tradeInfo && <TradeModal tradeInfo={tradeInfo} student={student} classInfo={classInfo} onClose={() => setTradeInfo(null)} onConfirm={handleConfirmTrade} />}
         </div>
     );
 };

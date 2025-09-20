@@ -11,6 +11,8 @@
             --primary-color: #4A90E2;
             --primary-dark: #357ABD;
             --secondary-color: #50E3C2;
+            --success-color: #198754;
+            --success-dark: #157347;
             --background-color: #f7f9fc;
             --text-color: #333;
             --card-bg: #ffffff;
@@ -129,10 +131,24 @@
             background-color: #555;
         }
         
+        .button-manage {
+            background-color: var(--success-color);
+        }
+        .button-manage:hover:not(:disabled) {
+            background-color: var(--success-dark);
+        }
+
         .button-buy {
             background-color: var(--positive-color);
         }
         .button-buy:hover:not(:disabled) {
+            background-color: #c62828;
+        }
+        
+        .button-danger {
+            background-color: var(--positive-color);
+        }
+        .button-danger:hover:not(:disabled) {
             background-color: #c62828;
         }
         
@@ -423,13 +439,12 @@
         .class-card p strong {
             color: #333;
         }
-
-        .class-card .button {
+        
+        .class-card-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
             margin-top: 1rem;
-            background-color: var(--secondary-color);
-        }
-        .class-card .button:hover {
-             background-color: #45c4a8;
         }
 
         /* Tabs */
