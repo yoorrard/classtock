@@ -144,45 +144,49 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                                 ))}
                             </ul>
                         </div>
-                        {fullPortfolio.length > 0 ? fullPortfolio.map(p => {
-                            if (!p) return null;
-                            const profitClass = p.profit > 0 ? 'positive' : p.profit < 0 ? 'negative' : 'neutral';
-                            return (
-                                <div key={p.stockCode} className="portfolio-item-card">
-                                    {/* Left Side: Purchase Info */}
-                                    <div className="portfolio-item-info">
-                                        <div className="item-name">
-                                            {p.stock.name}
-                                            <small>({p.stock.code})</small>
-                                        </div>
-                                        <div className="portfolio-item-details">
-                                            <div className="detail-group">
-                                                <span>총 매입금</span>
-                                                <span className="detail-value">{p.costBasis.toLocaleString()}원</span>
+                        {fullPortfolio.length > 0 ? (
+                            <div className="portfolio-grid">
+                                {fullPortfolio.map(p => {
+                                    if (!p) return null;
+                                    const profitClass = p.profit > 0 ? 'positive' : p.profit < 0 ? 'negative' : 'neutral';
+                                    return (
+                                        <div key={p.stockCode} className="portfolio-item-card">
+                                            {/* Left Side: Purchase Info */}
+                                            <div className="portfolio-item-info">
+                                                <div className="item-name">
+                                                    {p.stock.name}
+                                                    <small>({p.stock.code})</small>
+                                                </div>
+                                                <div className="portfolio-item-details">
+                                                    <div className="detail-group">
+                                                        <span>총 매입금</span>
+                                                        <span className="detail-value">{p.costBasis.toLocaleString()}원</span>
+                                                    </div>
+                                                    <div className="detail-group">
+                                                        <span>보유 수량</span>
+                                                        <span className="detail-value">{p.quantity.toLocaleString()}주</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="detail-group">
-                                                <span>보유 수량</span>
-                                                <span className="detail-value">{p.quantity.toLocaleString()}주</span>
+                                            {/* Right Side: Performance Info */}
+                                            <div className={`portfolio-item-performance ${profitClass}`}>
+                                                <div className="current-valuation">
+                                                    {p.currentValue.toLocaleString()}원
+                                                </div>
+                                                <div className="profit-summary">
+                                                    <div className="profit-amount">
+                                                        {p.profit > 0 ? '▲' : p.profit < 0 ? '▼' : ''} {Math.abs(p.profit).toLocaleString()}원
+                                                    </div>
+                                                    <div className="profit-rate">
+                                                        ({p.profitRate.toFixed(2)}%)
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    {/* Right Side: Performance Info */}
-                                    <div className={`portfolio-item-performance ${profitClass}`}>
-                                        <div className="current-valuation">
-                                            {p.currentValue.toLocaleString()}원
-                                        </div>
-                                        <div className="profit-summary">
-                                            <div className="profit-amount">
-                                                {p.profit > 0 ? '▲' : p.profit < 0 ? '▼' : ''} {Math.abs(p.profit).toLocaleString()}원
-                                            </div>
-                                            <div className="profit-rate">
-                                                ({p.profitRate.toFixed(2)}%)
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        }) : <div className="info-card" style={{textAlign: 'center'}}><p>현재 보유 주식이 없습니다.</p></div>}
+                                    );
+                                })}
+                            </div>
+                        ) : <div className="info-card" style={{textAlign: 'center'}}><p>현재 보유 주식이 없습니다.</p></div>}
                     </div>
                 )}
                 {activeTab === 'market' && <ul className="data-list">{allowedStocks.map(stock => {

@@ -1181,7 +1181,7 @@
             }
         }
         
-        /* --- Responsive Styles for Wider Screens --- */
+        /* --- Responsive Styles for Wider Screens (REVISED) --- */
         @media (min-width: 768px) {
             body {
                 padding: 40px 20px;
@@ -1217,7 +1217,36 @@
                 grid-template-columns: repeat(3, 1fr);
                 gap: 1rem;
             }
+        }
 
+        @media (min-width: 1200px) {
+            #root {
+                max-width: 1140px;
+            }
+
+            /* Landing page info sections become a 2-column grid */
+            .info-sections-landing {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+                align-items: start;
+            }
+
+            /* Teacher dashboard class list becomes a 3-column grid */
+            .class-list {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            /* Student portfolio becomes a 2-column grid */
+            .portfolio-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .portfolio-grid .portfolio-item-card {
+                margin-bottom: 0;
+            }
         }
 
 
