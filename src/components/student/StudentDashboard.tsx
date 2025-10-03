@@ -14,7 +14,7 @@ interface StudentDashboardProps {
     isTradingActive: boolean;
 }
 
-const PIE_CHART_COLORS = ['#4A90E2', '#50E3C2', '#F5A623', '#BD10E0', '#7ED321', '#F8E71C', '#9013FE', '#B8E986', '#417505', '#E02020'];
+const PIE_CHART_COLORS = ['#B29146', '#D4AC0D', '#876445', '#CA955C', '#E5B876', '#F5D4A2', '#6c584c'];
 
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo, stocks, transactions, classRanking, onTrade, onLogout, isTradingActive }) => {
     const [activeTab, setActiveTab] = useState('portfolio');
@@ -58,11 +58,11 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
         const endDate = new Date(`${classInfo.endDate}T23:59:59+09:00`);
 
         if (now < startDate) {
-            return { text: '활동 전', color: 'var(--bonus-color)' };
+            return { text: '활동 전', color: 'var(--student-color)' };
         } else if (now > endDate) {
             return { text: '활동 종료', color: '#777' };
         } else {
-            return { text: '활동 중', color: 'var(--secondary-color)' };
+            return { text: '활동 중', color: 'var(--teacher-color)' };
         }
     };
     
@@ -75,7 +75,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
             color: PIE_CHART_COLORS[index % PIE_CHART_COLORS.length],
         }));
         
-        data.unshift({ name: '보유 현금', value: cash, color: '#aaa' });
+        data.unshift({ name: '보유 현금', value: cash, color: '#B0B0B0' });
         
         return data.filter(d => d.value > 0);
     }, [fullPortfolio, cash]);
@@ -212,11 +212,11 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                          {t.type === 'bonus' ? (
                             <>
                                 <div className="stock-info">
-                                    <span style={{color: 'var(--bonus-color)'}}>{t.stockName}</span>
+                                    <span style={{color: 'var(--student-color)'}}>{t.stockName}</span>
                                     <small>{new Date(t.timestamp).toLocaleString()}</small>
                                     {t.reason && <small className="transaction-reason">사유: {t.reason}</small>}
                                 </div>
-                                <div style={{color: 'var(--bonus-color)', fontWeight: '700', textAlign: 'right'}}>+{t.price.toLocaleString()}원</div>
+                                <div style={{color: 'var(--student-color)', fontWeight: '700', textAlign: 'right'}}>+{t.price.toLocaleString()}원</div>
                             </>
                         ) : (
                             <>
