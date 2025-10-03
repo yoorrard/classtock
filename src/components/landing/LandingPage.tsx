@@ -80,9 +80,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                 <div className="role-card" role="region" aria-labelledby="teacher_title">
                     <h2 id="teacher_title">교사용</h2>
                     <p>학급을 만들고 학생들의 투자를 관리하세요.</p>
-                    <button className="button" onClick={() => setActiveModal('teacherLogin')} aria-label="교사용으로 시작하기">
-                        시작하기
-                    </button>
+                    <div className="role-card-button-group">
+                        <button className="button button-secondary" onClick={() => setActiveModal('teacherRegister')} aria-label="교사용 회원가입">
+                            회원가입
+                        </button>
+                        <button className="button" onClick={() => setActiveModal('teacherLogin')} aria-label="교사용 로그인">
+                            로그인
+                        </button>
+                    </div>
                 </div>
                 <div className="role-card" role="region" aria-labelledby="student_title">
                     <h2 id="student_title">학생용</h2>
