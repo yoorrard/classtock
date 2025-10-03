@@ -140,52 +140,63 @@ const App: React.FC = () => {
         setView('class_detail');
     };
     
-    const handleStudentRegister = (code: string, nickname: string, password: string) => {
+    const handleStudentJoin = (code: string, name: string) => {
         const classToJoin = classes.find(c => `C${c.id.substring(c.id.length - 6)}`.toLowerCase() === code.toLowerCase().trim());
         if (!classToJoin) {
             addToast('유효하지 않은 참여 코드입니다.', 'error');
             return;
         }
-
-        const isNicknameTaken = students.some(s => s.classId === classToJoin.id && s.nickname.toLowerCase() === nickname.trim().toLowerCase());
-        if (isNicknameTaken) {
-            addToast('해당 학급에서 이미 사용 중인 아이디입니다.', 'error');
-            return;
-        }
-        
-        const newStudent: StudentInfo = {
-            id: `S${Date.now()}`,
-            nickname: nickname.trim(),
-            password,
-            classId: classToJoin.id,
-            cash: classToJoin.seedMoney,
-            portfolio: [],
-        };
-        setStudents(prev => [...prev, newStudent]);
-        setCurrentStudentId(newStudent.id);
-        setView('student_dashboard');
-        addToast(`'${classToJoin.name}'에 오신 것을 환영합니다!`, 'success');
-    };
-
-    const handleStudentLogin = (code: string, nickname: string, password: string) => {
-        const classToLogin = classes.find(c => `C${c.id.substring(c.id.length - 6)}`.toLowerCase() === code.toLowerCase().trim());
-         if (!classToLogin) {
-            addToast('학급 코드를 확인해주세요.', 'error');
-            return;
-        }
-        
+    
         const studentToLogin = students.find(s => 
-            s.classId === classToLogin.id && 
-            s.nickname.toLowerCase() === nickname.trim().toLowerCase() &&
-            s.password === password
+            s.classId === classToJoin.id && 
+            s.nickname.toLowerCase() === name.trim().toLowerCase()
         );
-
+    
         if (studentToLogin) {
             setCurrentStudentId(studentToLogin.id);
             setView('student_dashboard');
+            addToast(`'${classToJoin.name}'에 오신 것을 환영합니다!`, 'success');
         } else {
-            addToast('아이디 또는 비밀번호가 일치하지 않습니다.', 'error');
+            addToast('학급에 등록된 이름이 아닙니다. 선생님께 확인해주세요.', 'error');
         }
+    };
+    
+    const handleBulkRegisterStudents = (classId: string, studentNames: string[]) => {
+        const classInfo = classes.find(c => c.id === classId);
+        if (!classInfo) return;
+    
+        const classStudents = students.filter(s => s.classId === classId);
+        const existingNames = new Set(classStudents.map(s => s.nickname.toLowerCase()));
+    
+        const newStudents: StudentInfo[] = [];
+        let duplicateCount = 0;
+        
+        studentNames.forEach(name => {
+            const trimmedName = name.trim();
+            if (trimmedName.length > 0 && !existingNames.has(trimmedName.toLowerCase())) {
+                const newStudent: StudentInfo = {
+                    id: `S${Date.now()}-${trimmedName}`,
+                    nickname: trimmedName,
+                    classId: classId,
+                    cash: classInfo.seedMoney,
+                    portfolio: [],
+                };
+                newStudents.push(newStudent);
+                existingNames.add(trimmedName.toLowerCase());
+            } else if (trimmedName.length > 0) {
+                duplicateCount++;
+            }
+        });
+    
+        if (newStudents.length > 0) {
+            setStudents(prev => [...prev, ...newStudents]);
+        }
+        
+        let message = `${newStudents.length}명의 학생이 성공적으로 등록되었습니다.`;
+        if (duplicateCount > 0) {
+            message += ` (${duplicateCount}개의 중복된 이름은 제외)`;
+        }
+        addToast(message, 'success');
     };
 
     const handleUpdateClassStocks = (classId: string, updatedStockCodes: string[]) => {
@@ -372,6 +383,7 @@ const App: React.FC = () => {
                     onAwardBonus={handleAwardBonus}
                     onBack={() => { setSelectedClassId(null); setView('teacher_dashboard'); }}
                     addToast={addToast}
+                    onBulkRegister={handleBulkRegisterStudents}
                 />;
             case 'student_dashboard':
                 if (!currentStudent || !studentClass) { setView('landing'); return null; }
@@ -409,8 +421,7 @@ const App: React.FC = () => {
             default: return <LandingPage
                 notices={notices}
                 onNavigate={setView}
-                onStudentRegister={handleStudentRegister}
-                onStudentLogin={handleStudentLogin}
+                onStudentJoin={handleStudentJoin}
                 onTeacherLogin={() => setView('teacher_dashboard')}
                 onAdminLogin={handleAdminLogin}
                 addToast={addToast}

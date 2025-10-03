@@ -16,7 +16,6 @@ export interface PortfolioItem { stockCode: string; quantity: number; averagePri
 export interface StudentInfo {
     id: string;
     nickname: string;
-    password: string; // Added for login
     classId: string;
     cash: number;
     portfolio: PortfolioItem[];

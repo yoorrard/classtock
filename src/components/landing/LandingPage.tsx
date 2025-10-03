@@ -9,13 +9,12 @@ import AdminLoginModal from '../admin/AdminLoginModal';
 interface LandingPageProps {
     notices: Notice[];
     onNavigate: (view: View) => void;
-    onStudentRegister: (code: string, nickname: string, password: string) => void;
-    onStudentLogin: (code: string, nickname: string, password: string) => void;
+    onStudentJoin: (code: string, name: string) => void;
     onTeacherLogin: () => void;
     onAdminLogin: (password: string) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
 }
-const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStudentRegister, onStudentLogin, onTeacherLogin, onAdminLogin, addToast }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStudentJoin, onTeacherLogin, onAdminLogin, addToast }) => {
     const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
     const [activeModal, setActiveModal] = useState<'student' | 'teacher' | 'admin' | null>(null);
@@ -169,7 +168,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
             </footer>
             
             {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
-            {activeModal === 'student' && <StudentLoginModal onClose={() => setActiveModal(null)} onRegister={onStudentRegister} onLogin={onStudentLogin} />}
+            {activeModal === 'student' && <StudentLoginModal onClose={() => setActiveModal(null)} onJoin={onStudentJoin} />}
             {activeModal === 'teacher' && <TeacherLoginModal onClose={() => setActiveModal(null)} onLoginSuccess={onTeacherLogin} />}
             {activeModal === 'admin' && <AdminLoginModal onClose={() => setActiveModal(null)} onLogin={(password) => { onAdminLogin(password); setActiveModal(null); }} />}
         </div>

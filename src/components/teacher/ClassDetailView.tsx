@@ -4,6 +4,7 @@ import StockManager from './StockManager';
 import RankingBoard from '../shared/RankingBoard';
 import BonusModal from './BonusModal';
 import StudentPortfolioModal from './StudentPortfolioModal';
+import BulkRegisterModal from './BulkRegisterModal';
 
 interface ClassDetailViewProps { 
     onBack: () => void;
@@ -13,11 +14,13 @@ interface ClassDetailViewProps {
     onUpdateClassStocks: (updated: string[]) => void; 
     onAwardBonus: (studentIds: string[], amount: number, reason: string) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
+    onBulkRegister: (classId: string, studentNames: string[]) => void;
 }
-const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, students, allStocks, onUpdateClassStocks, onAwardBonus, addToast }) => {
+const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, students, allStocks, onUpdateClassStocks, onAwardBonus, addToast, onBulkRegister }) => {
     const [activeTab, setActiveTab] = useState('info');
     const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
     const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
+    const [isBulkRegisterModalOpen, setIsBulkRegisterModalOpen] = useState(false);
     const [bonusRecipients, setBonusRecipients] = useState<(StudentInfo & { totalAssets: number })[]>([]);
     const [viewingStudent, setViewingStudent] = useState<(StudentInfo & { totalAssets: number }) | null>(null);
     const joinCode = `C${classInfo.id.substring(classInfo.id.length - 6)}`;
@@ -58,6 +61,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
             setSelectedStudentIds(new Set());
         }
     };
+    
+    const handleConfirmBulkRegister = (names: string[]) => {
+        onBulkRegister(classInfo.id, names);
+        setIsBulkRegisterModalOpen(false);
+    };
 
     const selectedStudents = students.filter(s => selectedStudentIds.has(s.id));
     const allStudentsSelected = students.length > 0 && selectedStudentIds.size === students.length;
@@ -81,6 +89,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                                 <label htmlFor="select-all-students">전체 선택 ({selectedStudentIds.size}/{students.length})</label>
                             </div>
                             <div className="action-buttons-group">
+                                <button onClick={() => setIsBulkRegisterModalOpen(true)} className="button" style={{padding: '0.3rem 0.8rem', fontSize: '0.8rem'}}>학생 일괄 등록</button>
                                 <button onClick={() => openBonusModal(selectedStudents)} disabled={selectedStudentIds.size === 0} className="button button-bonus">선택 학생 보너스</button>
                                 <button onClick={() => openBonusModal(students)} disabled={students.length === 0} className="button button-bonus">전체 학생 보너스</button>
                             </div>
@@ -95,11 +104,19 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                             </li>
                         ))}</ul>
                     </>
-                ) : <div className="info-card" style={{textAlign: 'center'}}><p>아직 참여한 학생이 없습니다.</p></div>}</div>}
+                ) : (
+                <>
+                    <div className="info-card" style={{textAlign: 'center'}}><p>아직 참여한 학생이 없습니다.</p></div>
+                    <div style={{textAlign: 'center', marginTop: '2rem'}}>
+                        <button onClick={() => setIsBulkRegisterModalOpen(true)} className="button">학생 명단 등록하기</button>
+                    </div>
+                </>
+                )}</div>}
                 {activeTab === 'stocks' && <StockManager allowedStocks={classInfo.allowedStocks} allStocks={allStocks} onSave={onUpdateClassStocks} />}
                 {activeTab === 'ranking' && <RankingBoard students={students} />}
             </div>
              <div className="action-buttons" style={{marginTop: '2rem'}}><button type="button" className="button button-secondary" style={{width: '100%'}} onClick={onBack}>대시보드로 돌아가기</button></div>
+             {isBulkRegisterModalOpen && <BulkRegisterModal onClose={() => setIsBulkRegisterModalOpen(false)} onConfirm={handleConfirmBulkRegister} />}
              {isBonusModalOpen && <BonusModal students={bonusRecipients} onClose={() => setIsBonusModalOpen(false)} onConfirm={handleConfirmBonus} />}
              {viewingStudent && <StudentPortfolioModal student={viewingStudent} stocks={allStocks} onClose={() => setViewingStudent(null)} />}
         </div>
