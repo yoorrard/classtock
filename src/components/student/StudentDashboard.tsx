@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { StudentInfo, ClassInfo, Stock, Transaction, TradeInfo, TradeType } from '../../types';
 import RankingBoard from '../shared/RankingBoard';
 import TradeModal from './TradeModal';
+import StockInfoModal from './StockInfoModal';
 
 interface StudentDashboardProps {
     student: StudentInfo & { totalAssets: number };
@@ -19,6 +20,7 @@ const PIE_CHART_COLORS = ['#B29146', '#D4AC0D', '#876445', '#CA955C', '#E5B876',
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo, stocks, transactions, classRanking, onTrade, onLogout, isTradingActive }) => {
     const [activeTab, setActiveTab] = useState('portfolio');
     const [tradeInfo, setTradeInfo] = useState<TradeInfo | null>(null);
+    const [infoModalStock, setInfoModalStock] = useState<Stock | null>(null);
     const { totalAssets, cash, portfolio } = student;
     const stockAssets = totalAssets - cash;
 
@@ -42,8 +44,6 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
             };
         }).filter((p): p is NonNullable<typeof p> => p !== null);
     }, [portfolio, stocks]);
-
-    const allowedStocks = classInfo.allowedStocks.map(code => stocks.find(s => s.code === code)).filter(Boolean) as Stock[];
 
     const handleConfirmTrade = (quantity: number) => {
         if (tradeInfo) {
@@ -189,20 +189,20 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                         ) : <div className="info-card" style={{textAlign: 'center'}}><p>현재 보유 주식이 없습니다.</p></div>}
                     </div>
                 )}
-                {activeTab === 'market' && <ul className="data-list">{allowedStocks.map(stock => {
+                {activeTab === 'market' && <ul className="data-list">{stocks.map(stock => {
                     const ownedStock = portfolio.find(p => p.stockCode === stock.code);
                     const canSell = ownedStock && ownedStock.quantity > 0;
                     return (
-                        <li key={stock.code} className="data-list-item">
+                        <li key={stock.code} className="data-list-item" style={{cursor: 'pointer'}} onClick={() => setInfoModalStock(stock)}>
                             <div className="stock-info">
                                 <span>{stock.name}</span>
-                                <small>{stock.code}</small>
+                                <small>{stock.sector}</small>
                                 {canSell && <small style={{ color: 'var(--negative-color)', fontWeight: 500 }}>보유: {ownedStock.quantity}주</small>}
                             </div>
                             <div className="price-info"><span>{stock.price.toLocaleString()}원</span></div>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <button onClick={() => setTradeInfo({ type: 'sell', stock })} className="button button-sell" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}} disabled={!isTradingActive || !canSell}>매도</button>
-                                <button onClick={() => setTradeInfo({ type: 'buy', stock })} className="button button-buy" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}} disabled={!isTradingActive}>매수</button>
+                                <button onClick={(e) => { e.stopPropagation(); setTradeInfo({ type: 'sell', stock }); }} className="button button-sell" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}} disabled={!isTradingActive || !canSell}>매도</button>
+                                <button onClick={(e) => { e.stopPropagation(); setTradeInfo({ type: 'buy', stock }); }} className="button button-buy" style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}} disabled={!isTradingActive}>매수</button>
                             </div>
                         </li>
                     );
@@ -229,6 +229,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                 {activeTab === 'ranking' && <RankingBoard students={classRanking} />}
             </div>
             {tradeInfo && <TradeModal tradeInfo={tradeInfo} student={student} classInfo={classInfo} onClose={() => setTradeInfo(null)} onConfirm={handleConfirmTrade} />}
+            {infoModalStock && <StockInfoModal stock={infoModalStock} onClose={() => setInfoModalStock(null)} />}
         </div>
     );
 };

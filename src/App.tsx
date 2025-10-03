@@ -114,12 +114,12 @@ const App: React.FC = () => {
     };
 
     // --- HANDLER FUNCTIONS ---
-    const handleCreateClass = (newClassData: Omit<ClassInfo, 'id' | 'allowedStocks'>) => {
+    const handleCreateClass = (newClassData: Omit<ClassInfo, 'id'>) => {
         if (classes.length >= 2) {
             addToast('학급은 최대 2개까지만 생성할 수 있습니다.', 'error');
             return;
         }
-        const newClass: ClassInfo = { id: `C${Date.now()}`, allowedStocks: [], ...newClassData };
+        const newClass: ClassInfo = { id: `C${Date.now()}`, ...newClassData };
         setClasses(prev => [...prev, newClass]);
         addToast(`'${newClass.name}' 학급이 생성되었습니다.`, 'success');
     };
@@ -204,11 +204,6 @@ const App: React.FC = () => {
             message += ` (${duplicateCount}개의 중복된 이름은 제외)`;
         }
         addToast(message, 'success');
-    };
-
-    const handleUpdateClassStocks = (classId: string, updatedStockCodes: string[]) => {
-        setClasses(prev => prev.map(c => c.id === classId ? { ...c, allowedStocks: updatedStockCodes } : c));
-        addToast('투자 종목이 성공적으로 업데이트되었습니다.', 'success');
     };
 
     const handleTrade = (studentId: string, stockCode: string, quantity: number, type: 'buy' | 'sell') => {
@@ -385,8 +380,7 @@ const App: React.FC = () => {
                 return <ClassDetailView 
                     classInfo={selectedClass} 
                     students={classStudents}
-                    allStocks={stocks}
-                    onUpdateClassStocks={(updated) => handleUpdateClassStocks(selectedClass.id, updated)}
+                    stocks={stocks}
                     onAwardBonus={handleAwardBonus}
                     onBack={() => { setSelectedClassId(null); setView('teacher_dashboard'); }}
                     addToast={addToast}

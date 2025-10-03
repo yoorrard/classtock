@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ClassInfo, StudentInfo, Stock, ToastMessage } from '../../types';
-import StockManager from './StockManager';
 import RankingBoard from '../shared/RankingBoard';
 import BonusModal from './BonusModal';
 import StudentPortfolioModal from './StudentPortfolioModal';
@@ -10,13 +9,12 @@ interface ClassDetailViewProps {
     onBack: () => void;
     classInfo: ClassInfo; 
     students: (StudentInfo & { totalAssets: number })[]; 
-    allStocks: Stock[]; 
-    onUpdateClassStocks: (updated: string[]) => void; 
+    stocks: Stock[];
     onAwardBonus: (studentIds: string[], amount: number, reason: string) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
     onBulkRegister: (classId: string, studentNames: string[]) => void;
 }
-const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, students, allStocks, onUpdateClassStocks, onAwardBonus, addToast, onBulkRegister }) => {
+const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, students, stocks, onAwardBonus, addToast, onBulkRegister }) => {
     const [activeTab, setActiveTab] = useState('info');
     const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
     const [isBonusModalOpen, setIsBonusModalOpen] = useState(false);
@@ -76,7 +74,6 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
             <div className="tabs">
                 <button className={`tab-button ${activeTab === 'info' ? 'active' : ''}`} onClick={() => setActiveTab('info')}>기본 정보</button>
                 <button className={`tab-button ${activeTab === 'students' ? 'active' : ''}`} onClick={() => setActiveTab('students')}>학생 관리 ({students.length})</button>
-                <button className={`tab-button ${activeTab === 'stocks' ? 'active' : ''}`} onClick={() => setActiveTab('stocks')}>종목 관리</button>
                 <button className={`tab-button ${activeTab === 'ranking' ? 'active' : ''}`} onClick={() => setActiveTab('ranking')}>랭킹 보드</button>
             </div>
             <div className="tab-content">
@@ -112,13 +109,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                     </div>
                 </>
                 )}</div>}
-                {activeTab === 'stocks' && <StockManager allowedStocks={classInfo.allowedStocks} allStocks={allStocks} onSave={onUpdateClassStocks} />}
                 {activeTab === 'ranking' && <RankingBoard students={students} />}
             </div>
              <div className="action-buttons" style={{marginTop: '2rem'}}><button type="button" className="button button-secondary" style={{width: '100%'}} onClick={onBack}>대시보드로 돌아가기</button></div>
              {isBulkRegisterModalOpen && <BulkRegisterModal onClose={() => setIsBulkRegisterModalOpen(false)} onConfirm={handleConfirmBulkRegister} />}
              {isBonusModalOpen && <BonusModal students={bonusRecipients} onClose={() => setIsBonusModalOpen(false)} onConfirm={handleConfirmBonus} />}
-             {viewingStudent && <StudentPortfolioModal student={viewingStudent} stocks={allStocks} onClose={() => setViewingStudent(null)} />}
+             {viewingStudent && <StudentPortfolioModal student={viewingStudent} stocks={stocks} onClose={() => setViewingStudent(null)} />}
         </div>
     );
 };

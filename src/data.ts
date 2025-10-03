@@ -1,25 +1,39 @@
 import { Stock, Notice, QnAPost } from './types';
 
 export const mockStockData: Stock[] = [
-    // Recommended
-    { code: '005930', name: '삼성전자', price: 81000 }, // IT / 전기전자
-    { code: '005380', name: '현대차', price: 250000 }, // 자동차
-    { code: '051910', name: 'LG화학', price: 450000 }, // 화학 / 2차전지
-    { code: '035420', name: 'NAVER', price: 190000 }, // 인터넷 / 플랫폼
-    { code: '068270', name: '셀트리온', price: 180000 }, // 바이오 / 제약
-    { code: '005490', name: 'POSCO홀딩스', price: 400000 }, // 철강 / 소재
-    { code: '105560', name: 'KB금융', price: 78000 }, // 금융
-    { code: '003490', name: '대한항공', price: 22000 }, // 운송
-    { code: '097950', name: 'CJ제일제당', price: 300000 }, // 식음료
-    { code: '329180', name: 'HD현대중공업', price: 135000 }, // 조선 / 중공업
-    
-    // Others for variety
-    { code: '000660', name: 'SK하이닉스', price: 180000 },
-    { code: '035720', name: '카카오', price: 50000 },
-    { code: '207940', name: '삼성바이오로직스', price: 800000 },
-    { code: '028260', name: '삼성물산', price: 130000 },
-    { code: '003550', name: 'LG', price: 95000 }, // 지주사
-    { code: '017670', name: 'SK텔레콤', price: 51000 }, // 통신
+    // IT / 전기전자
+    { code: '005930', name: '삼성전자', price: 81000, sector: 'IT / 전기전자', description: '세계적인 기술 기업으로 반도체, 스마트폰, 가전제품 등을 생산합니다.' },
+    { code: '000660', name: 'SK하이닉스', price: 220000, sector: 'IT / 전기전자', description: 'DRAM과 낸드플래시 등 메모리 반도체 분야의 글로벌 리더입니다.' },
+    // 자동차
+    { code: '005380', name: '현대차', price: 275000, sector: '자동차', description: '대한민국 최대의 자동차 제조업체로, 다양한 종류의 차량을 생산합니다.' },
+    { code: '000270', name: '기아', price: 125000, sector: '자동차', description: '현대자동차그룹에 속한 대한민국의 주요 자동차 제조업체입니다.' },
+    // 화학 / 2차전지
+    { code: '373220', name: 'LG에너지솔루션', price: 360000, sector: '화학 / 2차전지', description: '전기차 및 에너지 저장 시스템(ESS)용 배터리 기술의 글로벌 리더입니다.' },
+    { code: '096770', name: 'SK이노베이션', price: 110000, sector: '화학 / 에너지', description: '석유, 화학, 윤활유, 배터리 소재 등 다양한 에너지 및 화학 사업을 영위합니다.' },
+    // 인터넷 / 플랫폼
+    { code: '035420', name: 'NAVER', price: 170000, sector: '인터넷 / 플랫폼', description: '검색, 소셜 미디어, 쇼핑 등 다양한 온라인 서비스를 제공하는 대한민국 대표 인터넷 포털입니다.' },
+    { code: '035720', name: '카카오', price: 43000, sector: '인터넷 / 플랫폼', description: '모바일 메신저 \'카카오톡\'을 기반으로 핀테크, 콘텐츠 등 다양한 서비스를 제공하는 인터넷 기업입니다.' },
+    // 바이오 / 제약
+    { code: '207940', name: '삼성바이오로직스', price: 800000, sector: '바이오 / 제약', description: '바이오 의약품 위탁 개발 및 생산(CDMO)을 전문으로 하는 선도적인 기업입니다.' },
+    { code: '068270', name: '셀트리온', price: 185000, sector: '바이오 / 제약', description: '바이오시밀러(바이오의약품 복제약) 및 신약 개발을 전문으로 하는 바이오 제약 기업입니다.' },
+    // 금융
+    { code: '105560', name: 'KB금융', price: 78000, sector: '금융', description: '은행, 증권, 보험 등 다양한 금융 서비스를 제공하는 대한민국 최대 금융 그룹 중 하나입니다.' },
+    // 철강 / 소재
+    { code: '005490', name: 'POSCO홀딩스', price: 400000, sector: '철강 / 소재', description: '글로벌 철강 기업으로, 철강 생산 외에도 무역, 건설, 신소재 사업 등을 영위합니다.' },
+    // 중공업 / 건설
+    { code: '329180', name: 'HD현대중공업', price: 135000, sector: '중공업 / 건설', description: '세계 최대의 조선 회사로, 선박 건조 외에도 중장비, 해양 플랜트 사업을 합니다.' },
+    { code: '000720', name: '현대건설', price: 33000, sector: '중공업 / 건설', description: '사회 기반 시설, 건축, 플랜트 등 다양한 프로젝트를 수행하는 주요 건설 회사입니다.' },
+    // 유통 / 소비재
+    { code: '139480', name: '이마트', price: 65000, sector: '유통 / 소비재', description: '대한민국 최대 유통업체 중 하나로, 대형마트와 다양한 전문점을 운영합니다.' },
+    { code: '097950', name: 'CJ제일제당', price: 300000, sector: '유통 / 소비재', description: '가공식품, 바이오 제품 등을 생산하는 대한민국 대표 식품 및 바이오 기술 기업입니다.' },
+    // 운송 / 물류
+    { code: '003490', name: '대한항공', price: 22000, sector: '운송 / 물류', description: '대한민국을 대표하는 국적 항공사이자 최대 규모의 항공사입니다.' },
+    // 통신
+    { code: '017670', name: 'SK텔레콤', price: 51000, sector: '통신', description: '대한민국 최대의 무선 통신 사업자로, 이동통신 및 ICT 서비스를 제공합니다.' },
+    // 엔터테인먼트
+    { code: '352820', name: '하이브', price: 200000, sector: '엔터테인먼트', description: 'BTS 등 글로벌 K-POP 그룹이 소속된 대한민국의 엔터테인먼트 라이프스타일 플랫폼 기업입니다.' },
+    // 게임
+    { code: '225570', name: '넥슨게임즈', price: 14000, sector: '게임', description: '대한민국을 대표하는 게임 개발사 중 하나로, \'블루 아카이브\', \'히트2\' 등 인기 모바일 및 PC 게임을 개발하고 서비스합니다.' },
 ];
 
 export const mockNotices: Notice[] = [
