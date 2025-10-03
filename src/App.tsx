@@ -161,6 +161,13 @@ const App: React.FC = () => {
         }
     };
     
+    const handleTeacherRegister = (email: string, password: string) => {
+        // This is a placeholder for actual registration logic.
+        // For this demo, we'll just log them in immediately after "registering".
+        addToast('회원가입이 완료되었습니다. 자동으로 로그인됩니다.', 'success');
+        setView('teacher_dashboard');
+    };
+    
     const handleBulkRegisterStudents = (classId: string, studentNames: string[]) => {
         const classInfo = classes.find(c => c.id === classId);
         if (!classInfo) return;
@@ -423,6 +430,7 @@ const App: React.FC = () => {
                 onNavigate={setView}
                 onStudentJoin={handleStudentJoin}
                 onTeacherLogin={() => setView('teacher_dashboard')}
+                onTeacherRegister={handleTeacherRegister}
                 onAdminLogin={handleAdminLogin}
                 addToast={addToast}
             />;

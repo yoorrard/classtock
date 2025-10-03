@@ -4,6 +4,7 @@ import { termsOfService, privacyPolicy } from '../../data';
 import PolicyModal from '../shared/PolicyModal';
 import StudentLoginModal from './StudentLoginModal';
 import TeacherLoginModal from './TeacherLoginModal';
+import TeacherRegisterModal from './TeacherRegisterModal';
 import AdminLoginModal from '../admin/AdminLoginModal';
 
 interface LandingPageProps {
@@ -11,13 +12,14 @@ interface LandingPageProps {
     onNavigate: (view: View) => void;
     onStudentJoin: (code: string, name: string) => void;
     onTeacherLogin: () => void;
+    onTeacherRegister: (email: string, password: string) => void;
     onAdminLogin: (password: string) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
 }
-const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStudentJoin, onTeacherLogin, onAdminLogin, addToast }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStudentJoin, onTeacherLogin, onTeacherRegister, onAdminLogin, addToast }) => {
     const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
-    const [activeModal, setActiveModal] = useState<'student' | 'teacher' | 'admin' | null>(null);
+    const [activeModal, setActiveModal] = useState<'student' | 'teacherLogin' | 'teacherRegister' | 'admin' | null>(null);
     const latestNotices = notices.slice(0, 3);
 
     const openPolicy = (type: 'terms' | 'privacy') => {
@@ -32,6 +34,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
         e.preventDefault();
         onNavigate(type === 'notice' ? 'notice_board' : 'qna_board');
     }
+    
+    const handleTeacherRegisterSuccess = (email: string, password: string) => {
+        onTeacherRegister(email, password);
+        setActiveModal(null);
+    };
     
     const featuresData = [
       {
@@ -73,7 +80,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                 <div className="role-card" role="region" aria-labelledby="teacher_title">
                     <h2 id="teacher_title">교사용</h2>
                     <p>학급을 만들고 학생들의 투자를 관리하세요.</p>
-                    <button className="button" onClick={() => setActiveModal('teacher')} aria-label="교사용으로 시작하기">
+                    <button className="button" onClick={() => setActiveModal('teacherLogin')} aria-label="교사용으로 시작하기">
                         시작하기
                     </button>
                 </div>
@@ -169,7 +176,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
             
             {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
             {activeModal === 'student' && <StudentLoginModal onClose={() => setActiveModal(null)} onJoin={onStudentJoin} />}
-            {activeModal === 'teacher' && <TeacherLoginModal onClose={() => setActiveModal(null)} onLoginSuccess={onTeacherLogin} />}
+            {activeModal === 'teacherLogin' && <TeacherLoginModal 
+                onClose={() => setActiveModal(null)} 
+                onLoginSuccess={onTeacherLogin}
+                onSwitchToRegister={() => setActiveModal('teacherRegister')}
+            />}
+            {activeModal === 'teacherRegister' && <TeacherRegisterModal
+                onClose={() => setActiveModal(null)}
+                onRegisterSuccess={handleTeacherRegisterSuccess}
+                addToast={addToast}
+                onSwitchToLogin={() => setActiveModal('teacherLogin')}
+            />}
             {activeModal === 'admin' && <AdminLoginModal onClose={() => setActiveModal(null)} onLogin={(password) => { onAdminLogin(password); setActiveModal(null); }} />}
         </div>
     );
