@@ -162,7 +162,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                     </div>
                 </div>
                 <div className="info-card-landing">
-                    <h2 className="info-title-landing">자주 묻는 질문</h2>
+                    <h2 className="info-title-landing">
+                        <span>자주 묻는 질문</span>
+                        <button className="button-more" onClick={() => onNavigate('qna_board')}>Q&A</button>
+                    </h2>
                     <div className="faq-list">
                     {faqData.map((item, index) => (
                         <div className="faq-item" key={index}>
