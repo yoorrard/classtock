@@ -123,6 +123,7 @@
         .main-nav {
             display: flex;
             gap: 1rem;
+            align-items: center;
         }
 
         .nav-button {
@@ -136,6 +137,8 @@
             cursor: pointer;
             transition: color 0.2s ease, background-color 0.2s ease;
             border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
         }
 
         .nav-button:hover {
@@ -145,7 +148,7 @@
 
         .nav-item-container {
             position: relative;
-            display: inline-block;
+            display: flex;
         }
 
         .dropdown-menu {
@@ -516,9 +519,16 @@
             padding-top: 1rem;
             border-top: 1px solid var(--border-color);
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+        
+        .footer-links {
+            display: flex;
             justify-content: center;
             gap: 1.5rem;
-            position: relative;
         }
 
         .footer-link {
@@ -533,6 +543,17 @@
         .footer-link:hover {
             color: var(--primary-color);
             text-decoration: underline;
+        }
+        
+        .copyright-info {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .copyright-info p {
+            margin: 0;
         }
 
         /* Modal Styles */

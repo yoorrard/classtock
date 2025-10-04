@@ -63,8 +63,12 @@ const LandingHeader: React.FC<LandingHeaderProps> = ({ onGoHome, onNavigate, add
                 <span className="logo-text">ClassStock</span>
             </button>
             <nav className="main-nav">
-                <button className="nav-button" onClick={onGoHome}>홈</button>
-                <button className="nav-button" onClick={() => handleToastClick('준비 중입니다.')}>사용법</button>
+                <div className="nav-item-container">
+                    <button className="nav-button" onClick={onGoHome}>홈</button>
+                </div>
+                <div className="nav-item-container">
+                    <button className="nav-button" onClick={() => handleToastClick('준비 중입니다.')}>사용법</button>
+                </div>
                 
                 <div className="nav-item-container" ref={communityRef}>
                     <button className="nav-button" onClick={(e) => handleMenuToggle('community', e)}>

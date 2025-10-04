@@ -243,11 +243,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                 </div>
 
                  <footer className="footer">
-                    <button onClick={() => openPolicy('terms')} className="footer-link">이용약관</button>
-                    <button onClick={() => openPolicy('privacy')} className="footer-link">개인정보처리방침</button>
-                    <button onClick={(e) => handleFooterLinkClick(e, 'notice')} className="footer-link">공지사항</button>
-                    <button onClick={(e) => handleFooterLinkClick(e, 'qna')} className="footer-link">Q&A 게시판</button>
-                    <button onClick={() => setActiveModal('admin')} className="footer-link" style={{position: 'absolute', right: 0, opacity: 0.8}}>Admin</button>
+                    <div className="footer-links">
+                        <button onClick={() => openPolicy('terms')} className="footer-link">이용약관</button>
+                        <button onClick={() => openPolicy('privacy')} className="footer-link">개인정보처리방침</button>
+                    </div>
+                    <div className="copyright-info">
+                        <p>© 2025 ClassStock. All Rights Reserved.</p>
+                        <p>Created by 유영재</p>
+                    </div>
+                    <button onClick={() => setActiveModal('admin')} className="footer-link" style={{position: 'absolute', right: 0, top: '1rem', opacity: 0.8}}>Admin</button>
                 </footer>
                 
                 {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
