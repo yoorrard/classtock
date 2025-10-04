@@ -107,7 +107,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                     <div className="role-card" role="region" aria-labelledby="student_title">
                         <h2 id="student_title">학생용</h2>
                         <p>참여 코드를 입력하고 모의투자를 시작하세요.</p>
-                        <button className="button" onClick={() => setActiveModal('student')} aria-label="학생용으로 참여하기">
+                        <button className="button button-student" onClick={() => setActiveModal('student')} aria-label="학생용으로 참여하기">
                             참여하기
                         </button>
                     </div>
