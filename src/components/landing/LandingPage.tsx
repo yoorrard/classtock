@@ -9,6 +9,15 @@ import AdminLoginModal from '../admin/AdminLoginModal';
 import PasswordResetModal from './PasswordResetModal';
 import LandingHeader from './LandingHeader';
 
+// Use direct paths for images instead of importing them
+const photos = [
+    'assets/gallery-1.png',
+    'assets/gallery-2.png',
+    'assets/gallery-3.png',
+    'assets/gallery-4.png',
+    'assets/gallery-5.png'
+];
+
 interface LandingPageProps {
     notices: Notice[];
     onNavigate: (view: View) => void;
@@ -24,13 +33,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
     const [activeModal, setActiveModal] = useState<'student' | 'teacherLogin' | 'teacherRegister' | 'admin' | 'passwordReset' | null>(null);
     const latestNotices = notices.slice(0, 3);
     const [currentPhoto, setCurrentPhoto] = useState(0);
-    const photos = [
-        './assets/gallery-1.png',
-        './assets/gallery-2.png',
-        './assets/gallery-3.png',
-        './assets/gallery-4.png',
-        './assets/gallery-5.png'
-    ];
+
     const totalPhotos = photos.length;
 
     const handleNext = () => {
