@@ -411,9 +411,20 @@ const App: React.FC = () => {
                     isTradingActive={isActivityActive(studentClass)}
                 />;
             case 'notice_board':
-                return <NoticeBoard notices={notices} onBack={() => setView('landing')} />;
+                return <NoticeBoard 
+                    notices={notices} 
+                    onBack={() => setView('landing')} 
+                    onNavigate={setView}
+                    addToast={addToast}
+                />;
             case 'qna_board':
-                return <QnABoard posts={qnaPosts} onAskQuestion={handleAskQuestion} onBack={() => setView('landing')} addToast={addToast} />;
+                return <QnABoard 
+                    posts={qnaPosts} 
+                    onAskQuestion={handleAskQuestion} 
+                    onBack={() => setView('landing')} 
+                    addToast={addToast} 
+                    onNavigate={setView}
+                />;
             case 'admin_dashboard':
                 if (!isAdminLoggedIn) { setView('landing'); return null; }
                 return <AdminDashboard 

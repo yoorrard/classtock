@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { QnAPost } from '../../types';
+import { QnAPost, View } from '../../types';
+import LandingHeader from '../landing/LandingHeader';
 
 interface QnABoardProps {
     posts: QnAPost[];
     onAskQuestion: (data: Omit<QnAPost, 'id' | 'createdAt'>) => void;
     onBack: () => void;
     addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+    onNavigate: (view: View) => void;
 }
 
 const PasswordPromptModal: React.FC<{
@@ -132,7 +134,7 @@ const AskQuestionModal: React.FC<{
     );
 };
 
-const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addToast }) => {
+const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addToast, onNavigate }) => {
     const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [postToVerify, setPostToVerify] = useState<QnAPost | null>(null);
@@ -164,66 +166,69 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
     };
 
     return (
-        <div className="container">
-            <header className="header" style={{ marginBottom: '2rem', textAlign: 'left' }}>
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div>
-                        <h1 style={{ fontSize: '1.8rem', margin: 0 }}>Q&A 게시판</h1>
-                        <p style={{ margin: '0.25rem 0 0 0' }}>무엇이든 물어보세요.</p>
+        <>
+            <LandingHeader onGoHome={onBack} onNavigate={onNavigate} addToast={addToast} />
+            <div className="container">
+                <header className="header" style={{ marginBottom: '2rem', textAlign: 'left' }}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <div>
+                            <h1 style={{ fontSize: '1.8rem', margin: 0 }}>Q&A 게시판</h1>
+                            <p style={{ margin: '0.25rem 0 0 0' }}>무엇이든 물어보세요.</p>
+                        </div>
+                        <button className="button" style={{width: 'auto', padding: '0.5rem 1rem'}} onClick={() => setIsModalOpen(true)}>질문하기</button>
                     </div>
-                    <button className="button" style={{width: 'auto', padding: '0.5rem 1rem'}} onClick={() => setIsModalOpen(true)}>질문하기</button>
-                </div>
-            </header>
+                </header>
 
-            {posts.length > 0 ? (
-                <ul className="board-list">
-                    {posts.map(post => {
-                        const isUnlocked = post.isSecret && unlockedPosts.has(post.id);
-                        return (
-                            <li key={post.id} className="board-item">
-                                <div className="board-item-header" onClick={() => togglePost(post)}>
-                                    {post.isSecret ? (
-                                        <h2 className="board-item-title board-item-title-secret">
-                                            🔒 비밀글입니다
-                                        </h2>
-                                    ) : (
-                                        <h2 className="board-item-title">{post.question}</h2>
-                                    )}
-                                    <span className={`qna-status ${post.answer ? 'qna-status-answered' : 'qna-status-pending'}`}>
-                                        {post.answer ? '답변 완료' : '답변 대기'}
-                                    </span>
-                                </div>
-                                {expandedPostId === post.id && (
-                                    <div className="board-item-content">
-                                        <p><b>Q.</b> {post.question}</p>
-                                        <small style={{color: '#666'}}>작성자: {isUnlocked || !post.isSecret ? post.author : '비공개'} / 작성일: {new Date(post.createdAt).toLocaleDateString()}</small>
-                                        {post.answer && (
-                                            <div className="qna-answer">
-                                                <p className="qna-answer-header">A. 관리자 답변</p>
-                                                <p>{post.answer}</p>
-                                                <small style={{color: '#666'}}>답변일: {new Date(post.answeredAt!).toLocaleDateString()}</small>
-                                            </div>
+                {posts.length > 0 ? (
+                    <ul className="board-list">
+                        {posts.map(post => {
+                            const isUnlocked = post.isSecret && unlockedPosts.has(post.id);
+                            return (
+                                <li key={post.id} className="board-item">
+                                    <div className="board-item-header" onClick={() => togglePost(post)}>
+                                        {post.isSecret ? (
+                                            <h2 className="board-item-title board-item-title-secret">
+                                                🔒 비밀글입니다
+                                            </h2>
+                                        ) : (
+                                            <h2 className="board-item-title">{post.question}</h2>
                                         )}
+                                        <span className={`qna-status ${post.answer ? 'qna-status-answered' : 'qna-status-pending'}`}>
+                                            {post.answer ? '답변 완료' : '답변 대기'}
+                                        </span>
                                     </div>
-                                )}
-                            </li>
-                        )
-                    })}
-                </ul>
-            ) : (
-                <div className="info-card" style={{ textAlign: 'center' }}>
-                    <p>등록된 질문이 없습니다. 궁금한 점을 질문해보세요.</p>
+                                    {expandedPostId === post.id && (
+                                        <div className="board-item-content">
+                                            <p><b>Q.</b> {post.question}</p>
+                                            <small style={{color: '#666'}}>작성자: {isUnlocked || !post.isSecret ? post.author : '비공개'} / 작성일: {new Date(post.createdAt).toLocaleDateString()}</small>
+                                            {post.answer && (
+                                                <div className="qna-answer">
+                                                    <p className="qna-answer-header">A. 관리자 답변</p>
+                                                    <p>{post.answer}</p>
+                                                    <small style={{color: '#666'}}>답변일: {new Date(post.answeredAt!).toLocaleDateString()}</small>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </li>
+                            )
+                        })}
+                    </ul>
+                ) : (
+                    <div className="info-card" style={{ textAlign: 'center' }}>
+                        <p>등록된 질문이 없습니다. 궁금한 점을 질문해보세요.</p>
+                    </div>
+                )}
+                
+                <div className="action-buttons" style={{ marginTop: '2rem' }}>
+                    <button type="button" className="button button-secondary" style={{ width: '100%' }} onClick={onBack}>
+                        메인으로 돌아가기
+                    </button>
                 </div>
-            )}
-            
-            <div className="action-buttons" style={{ marginTop: '2rem' }}>
-                <button type="button" className="button button-secondary" style={{ width: '100%' }} onClick={onBack}>
-                    메인으로 돌아가기
-                </button>
+                {isModalOpen && <AskQuestionModal onClose={() => setIsModalOpen(false)} onConfirm={handleConfirmQuestion} />}
+                {postToVerify && <PasswordPromptModal onClose={() => setPostToVerify(null)} onConfirm={handlePasswordConfirm} />}
             </div>
-            {isModalOpen && <AskQuestionModal onClose={() => setIsModalOpen(false)} onConfirm={handleConfirmQuestion} />}
-            {postToVerify && <PasswordPromptModal onClose={() => setPostToVerify(null)} onConfirm={handlePasswordConfirm} />}
-        </div>
+        </>
     );
 };
 

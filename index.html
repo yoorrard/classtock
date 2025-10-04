@@ -75,6 +75,8 @@
 
         /* Main Header / Navigation */
         .main-header {
+            position: relative;
+            z-index: 200;
             margin-bottom: 2rem;
             display: flex;
             justify-content: space-between;
@@ -122,6 +124,48 @@
         .nav-button:hover {
             color: var(--primary-color);
             background-color: rgba(0,0,0,0.03);
+        }
+
+        .nav-item-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--strong-shadow);
+            z-index: 100;
+            padding: 0.5rem 0;
+            list-style: none;
+            margin-top: 0.5rem;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .dropdown-item {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem 1.25rem;
+            font-family: 'Gmarket Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            display: block; /* To make it take full width */
+            text-decoration: none; /* For anchor tags */
+            white-space: nowrap;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--light-bg);
+            color: var(--primary-color);
         }
 
         #root {

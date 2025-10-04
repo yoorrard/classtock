@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Notice, ToastMessage } from '../../types';
 import { termsOfService, privacyPolicy } from '../../data';
 import PolicyModal from '../shared/PolicyModal';
@@ -7,29 +7,7 @@ import TeacherLoginModal from './TeacherLoginModal';
 import TeacherRegisterModal from './TeacherRegisterModal';
 import AdminLoginModal from '../admin/AdminLoginModal';
 import PasswordResetModal from './PasswordResetModal';
-
-const LandingHeader: React.FC = () => {
-    return (
-        <header className="main-header">
-            <div className="logo-container">
-                <img 
-                    src="assets/logo.png" 
-                    alt="ClassStock Logo" 
-                    width="40" 
-                    height="40" 
-                    style={{flexShrink: 0}}
-                />
-                <span className="logo-text">ClassStock</span>
-            </div>
-            <nav className="main-nav">
-                <button className="nav-button">홈</button>
-                <button className="nav-button">사용법</button>
-                <button className="nav-button">커뮤니티</button>
-                <button className="nav-button">관련 앱</button>
-            </nav>
-        </header>
-    );
-};
+import LandingHeader from './LandingHeader';
 
 interface LandingPageProps {
     notices: Notice[];
@@ -103,7 +81,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
 
     return (
         <>
-            <LandingHeader />
+            <LandingHeader 
+                onGoHome={() => onNavigate('landing')}
+                onNavigate={onNavigate}
+                addToast={addToast}
+            />
             <div className="container" style={{ position: 'relative', textAlign: 'center' }}>
                 <header className="header">
                     <h1>ClassStock</h1>
