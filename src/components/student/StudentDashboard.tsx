@@ -3,13 +3,13 @@ import { StudentInfo, ClassInfo, Stock, Transaction, TradeInfo, TradeType } from
 import RankingBoard from '../shared/RankingBoard';
 import TradeModal from './TradeModal';
 import StockInfoModal from './StockInfoModal';
+import GlossaryModal from './GlossaryModal';
 
 interface StudentDashboardProps {
     student: StudentInfo & { totalAssets: number };
     classInfo: ClassInfo;
     stocks: Stock[];
     transactions: Transaction[];
-// FIX: Update classRanking prop to include totalProfit and totalProfitRate to match data from App.tsx.
     classRanking: (StudentInfo & { totalAssets: number; totalProfit: number; totalProfitRate: number; })[];
     onTrade: (studentId: string, stockCode: string, quantity: number, type: TradeType) => void;
     onLogout: () => void;
@@ -22,10 +22,18 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
     const [activeTab, setActiveTab] = useState('portfolio');
     const [tradeInfo, setTradeInfo] = useState<TradeInfo | null>(null);
     const [infoModalStock, setInfoModalStock] = useState<Stock | null>(null);
-    // FIX: Add state for sorting the ranking board.
     const [rankingSortBy, setRankingSortBy] = useState<'totalAssets' | 'profitRate'>('totalAssets');
+    const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
+    
     const { totalAssets, cash, portfolio } = student;
     const stockAssets = totalAssets - cash;
+
+    const totalProfitLoss = useMemo(() => {
+        return totalAssets - classInfo.seedMoney;
+    }, [totalAssets, classInfo.seedMoney]);
+
+    const profitClass = totalProfitLoss > 0 ? 'positive' : totalProfitLoss < 0 ? 'negative' : '';
+    const profitPrefix = totalProfitLoss > 0 ? '▲ ' : totalProfitLoss < 0 ? '▼ ' : '';
 
     const fullPortfolio = useMemo(() => {
         return portfolio.map(item => {
@@ -48,7 +56,6 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
         }).filter((p): p is NonNullable<typeof p> => p !== null);
     }, [portfolio, stocks]);
 
-    // FIX: Add memoized sorting for the ranking board data.
     const sortedStudentsForRanking = useMemo(() => {
         return [...classRanking].sort((a, b) => {
             if (rankingSortBy === 'profitRate') {
@@ -113,15 +120,26 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
     return (
         <div className="container">
             <header className="dashboard-header">
-                <div><h1 style={{ fontSize: '1.8rem', margin: 0 }}>{student.nickname}님</h1><p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>'{classInfo.name}'</p></div>
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <h1 style={{ fontSize: '1.8rem', margin: 0 }}>{student.nickname}님</h1>
+                        <span style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: activityStatus.color, color: '#fff', fontSize: '0.9rem', fontWeight: '500' }}>
+                            {activityStatus.text}
+                        </span>
+                    </div>
+                    <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>'{classInfo.name}'</p>
+                </div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-                     <span style={{ padding: '0.3rem 0.8rem', borderRadius: '8px', background: activityStatus.color, color: '#fff', fontSize: '0.9rem', fontWeight: '500' }}>
-                        {activityStatus.text}
-                     </span>
+                     <button onClick={() => setIsGlossaryOpen(true)} className="button" style={{ width: 'auto', padding: '0.5rem 1rem' }}>용어 사전</button>
                      <button onClick={onLogout} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>로그아웃</button>
                 </div>
             </header>
-            <div className="asset-summary"><h2>총 자산</h2><p>{totalAssets.toLocaleString()}원</p>
+            <div className="asset-summary">
+                <h2>총 자산</h2>
+                <p>{totalAssets.toLocaleString()}원</p>
+                <p className={`asset-profit-loss ${profitClass}`}>
+                    {profitPrefix}{Math.abs(totalProfitLoss).toLocaleString()}원
+                </p>
                  <div className="asset-details">
                     <span>보유 현금: {cash.toLocaleString()}원</span>
                     <span>주식 평가: {stockAssets.toLocaleString()}원</span>
@@ -163,36 +181,21 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                                     if (!p) return null;
                                     const profitClass = p.profit > 0 ? 'positive' : p.profit < 0 ? 'negative' : 'neutral';
                                     return (
-                                        <div key={p.stockCode} className="portfolio-item-card">
-                                            {/* Left Side: Purchase Info */}
-                                            <div className="portfolio-item-info">
-                                                <div className="item-name">
-                                                    {p.stock.name}
-                                                    <small>({p.stock.code})</small>
-                                                </div>
-                                                <div className="portfolio-item-details">
-                                                    <div className="detail-group">
-                                                        <span>총 매입금</span>
-                                                        <span className="detail-value">{p.costBasis.toLocaleString()}원</span>
-                                                    </div>
-                                                    <div className="detail-group">
-                                                        <span>보유 수량</span>
-                                                        <span className="detail-value">{p.quantity.toLocaleString()}주</span>
-                                                    </div>
+                                        <div key={p.stockCode} className="portfolio-card-new">
+                                            <div className="portfolio-card-main">
+                                                <div className="portfolio-card-name">{p.stock.name}</div>
+                                                <div className="portfolio-card-details">
+                                                    <p>평가금액: <strong>{p.currentValue.toLocaleString()}원</strong></p>
+                                                    <p>매입금액: <strong>{p.costBasis.toLocaleString()}원</strong></p>
                                                 </div>
                                             </div>
-                                            {/* Right Side: Performance Info */}
-                                            <div className={`portfolio-item-performance ${profitClass}`}>
-                                                <div className="current-valuation">
-                                                    {p.currentValue.toLocaleString()}원
-                                                </div>
-                                                <div className="profit-summary">
-                                                    <div className="profit-amount">
+                                            <div className="portfolio-card-aside">
+                                                <span className="portfolio-card-quantity">{p.quantity.toLocaleString()}주</span>
+                                                <div className={`portfolio-card-performance ${profitClass}`}>
+                                                    <span className="portfolio-card-profit">
                                                         {p.profit > 0 ? '▲' : p.profit < 0 ? '▼' : ''} {Math.abs(p.profit).toLocaleString()}원
-                                                    </div>
-                                                    <div className="profit-rate">
-                                                        ({p.profitRate.toFixed(2)}%)
-                                                    </div>
+                                                    </span>
+                                                    <span className="portfolio-card-rate">({p.profitRate.toFixed(2)}%)</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -264,6 +267,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
             </div>
             {tradeInfo && <TradeModal tradeInfo={tradeInfo} student={student} classInfo={classInfo} onClose={() => setTradeInfo(null)} onConfirm={handleConfirmTrade} />}
             {infoModalStock && <StockInfoModal stock={infoModalStock} onClose={() => setInfoModalStock(null)} />}
+            {isGlossaryOpen && <GlossaryModal onClose={() => setIsGlossaryOpen(false)} />}
         </div>
     );
 };

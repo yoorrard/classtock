@@ -151,7 +151,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                                             <h3 style={{marginBottom: '1rem'}}>{student.nickname}</h3>
                                             <p><strong>총 자산:</strong> {student.totalAssets.toLocaleString()}원</p>
                                             <p className={profitClass}>
-                                                <strong>수익금(률):</strong>
+                                                <strong>투자 수익금(률):</strong>{' '}
                                                 {student.totalProfit !== 0 && (
                                                     <span style={{marginRight: '0.25rem'}}>
                                                         {student.totalProfit > 0 ? '▲' : '▼'}
