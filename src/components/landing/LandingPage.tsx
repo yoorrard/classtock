@@ -8,6 +8,36 @@ import TeacherRegisterModal from './TeacherRegisterModal';
 import AdminLoginModal from '../admin/AdminLoginModal';
 import PasswordResetModal from './PasswordResetModal';
 
+const LandingHeader: React.FC = () => {
+    return (
+        <header className="main-header">
+            <div className="logo-container">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{flexShrink: 0}}>
+                    <defs>
+                        <linearGradient id="paint0_linear_header_logo" x1="2" y1="12" x2="22" y2="12" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#0B6623"/>
+                            <stop offset="1" stopColor="#158040"/>
+                        </linearGradient>
+                        <linearGradient id="paint1_linear_header_logo" x1="7" y1="12" x2="17" y2="12" gradientUnits="userSpaceOnUse">
+                            <stop stopColor="#B29146"/>
+                            <stop offset="1" stopColor="#d3b36a"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="url(#paint0_linear_header_logo)"/>
+                    <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" fill="url(#paint1_linear_header_logo)"/>
+                </svg>
+                <span className="logo-text">ClassStock</span>
+            </div>
+            <nav className="main-nav">
+                <button className="nav-button">홈</button>
+                <button className="nav-button">사용법</button>
+                <button className="nav-button">커뮤니티</button>
+                <button className="nav-button">관련 앱</button>
+            </nav>
+        </header>
+    );
+};
+
 interface LandingPageProps {
     notices: Notice[];
     onNavigate: (view: View) => void;
@@ -79,137 +109,140 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
     ];
 
     return (
-        <div className="container" style={{ position: 'relative', textAlign: 'center' }}>
-            <header className="header">
-                <h1>ClassStock</h1>
-                <p>선생님과 함께하는 즐거운 금융 교실</p>
-            </header>
-            <div className="role-selection">
-                <div className="role-card" role="region" aria-labelledby="teacher_title">
-                    <h2 id="teacher_title">교사용</h2>
-                    <p>학급을 만들고 학생들의 투자를 관리하세요.</p>
-                    <div className="role-card-button-group">
-                        <button className="button button-secondary" onClick={() => setActiveModal('teacherRegister')} aria-label="교사용 회원가입">
-                            회원가입
-                        </button>
-                        <button className="button" onClick={() => setActiveModal('teacherLogin')} aria-label="교사용 로그인">
-                            로그인
+        <>
+            <LandingHeader />
+            <div className="container" style={{ position: 'relative', textAlign: 'center' }}>
+                <header className="header">
+                    <h1>ClassStock</h1>
+                    <p>선생님과 함께하는 즐거운 금융 교실</p>
+                </header>
+                <div className="role-selection">
+                    <div className="role-card" role="region" aria-labelledby="teacher_title">
+                        <h2 id="teacher_title">교사용</h2>
+                        <p>학급을 만들고 학생들의 투자를 관리하세요.</p>
+                        <div className="role-card-button-group">
+                            <button className="button button-secondary" onClick={() => setActiveModal('teacherRegister')} aria-label="교사용 회원가입">
+                                회원가입
+                            </button>
+                            <button className="button" onClick={() => setActiveModal('teacherLogin')} aria-label="교사용 로그인">
+                                로그인
+                            </button>
+                        </div>
+                    </div>
+                    <div className="role-card" role="region" aria-labelledby="student_title">
+                        <h2 id="student_title">학생용</h2>
+                        <p>참여 코드를 입력하고 모의투자를 시작하세요.</p>
+                        <button className="button" onClick={() => setActiveModal('student')} aria-label="학생용으로 참여하기">
+                            참여하기
                         </button>
                     </div>
                 </div>
-                <div className="role-card" role="region" aria-labelledby="student_title">
-                    <h2 id="student_title">학생용</h2>
-                    <p>참여 코드를 입력하고 모의투자를 시작하세요.</p>
-                    <button className="button" onClick={() => setActiveModal('student')} aria-label="학생용으로 참여하기">
-                        참여하기
-                    </button>
-                </div>
-            </div>
 
-            <div className="info-sections-landing">
-                 <div className="info-card-landing">
-                    <h2 className="info-title-landing">주요 기능</h2>
-                    <div className="features-grid">
-                        {featuresData.map((feature, index) => (
-                            <div className="feature-item" key={index}>
-                                <div className="feature-icon">{feature.icon}</div>
-                                <div className="feature-text">
-                                    <h3>{feature.title}</h3>
-                                    <p>{feature.description}</p>
+                <div className="info-sections-landing">
+                     <div className="info-card-landing">
+                        <h2 className="info-title-landing">주요 기능</h2>
+                        <div className="features-grid">
+                            {featuresData.map((feature, index) => (
+                                <div className="feature-item" key={index}>
+                                    <div className="feature-icon">{feature.icon}</div>
+                                    <div className="feature-text">
+                                        <h3>{feature.title}</h3>
+                                        <p>{feature.description}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="info-card-landing">
+                        <h2 className="info-title-landing">활용 가이드</h2>
+                        <div className="guide-steps">
+                            <div className="guide-step">
+                                <span className="step-number">1</span>
+                                <p><strong>학급 개설</strong><br/>새 학급을 만들어 활동 기간과 시드머니을 설정합니다.</p>
+                            </div>
+                            <div className="guide-step">
+                                <span className="step-number">2</span>
+                                <p><strong>코드 공유</strong><br/>생성된 '참여 코드'를 학생들에게 공유하여 참여시킵니다.</p>
+                            </div>
+                            <div className="guide-step">
+                                <span className="step-number">3</span>
+                                <p><strong>학습 시작</strong><br/>랭킹과 포트폴리오를 보며 즐거운 투자 학습을 진행합니다.</p>
+                            </div>
+                             <div className="guide-step">
+                                <span className="step-number">4</span>
+                                <p><strong>학습 독려</strong><br/>과제 보상 등 추가 시드머니를 지급하며 학생 참여를 독려합니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="info-card-landing">
+                        <h2 className="info-title-landing">
+                            <span>새로운 소식</span>
+                            <button className="button-more" onClick={() => onNavigate('notice_board')}>더보기</button>
+                        </h2>
+                        <div className="faq-list" style={{border: 'none'}}>
+                           {latestNotices.map(notice => (
+                               <div key={notice.id} className="faq-item" style={{display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', alignItems: 'center'}}>
+                                   <span style={{
+                                       textOverflow: 'ellipsis',
+                                       whiteSpace: 'nowrap',
+                                       overflow: 'hidden',
+                                       cursor: 'pointer'
+                                   }} onClick={() => onNavigate('notice_board')}>{notice.title}</span>
+                                   <span style={{fontSize: '0.85rem', color: '#666', flexShrink: 0, marginLeft: '1rem'}}>{new Date(notice.createdAt).toLocaleDateString()}</span>
+                               </div>
+                           ))}
+                        </div>
+                    </div>
+                    <div className="info-card-landing">
+                        <h2 className="info-title-landing">
+                            <span>자주 묻는 질문</span>
+                            <button className="button-more" onClick={() => onNavigate('qna_board')}>Q&A</button>
+                        </h2>
+                        <div className="faq-list">
+                        {faqData.map((item, index) => (
+                            <div className="faq-item" key={index}>
+                                <button className="faq-question" onClick={() => setActiveFaq(activeFaq === index ? null : index)}>
+                                    <span>{item.q}</span>
+                                    <span className="faq-icon">{activeFaq === index ? '−' : '+'}</span>
+                                </button>
+                                <div className={`faq-answer ${activeFaq === index ? 'open' : ''}`}>
+                                   <p>{item.a}</p>
                                 </div>
                             </div>
                         ))}
-                    </div>
-                </div>
-                <div className="info-card-landing">
-                    <h2 className="info-title-landing">활용 가이드</h2>
-                    <div className="guide-steps">
-                        <div className="guide-step">
-                            <span className="step-number">1</span>
-                            <p><strong>학급 개설</strong><br/>새 학급을 만들어 활동 기간과 시드머니을 설정합니다.</p>
-                        </div>
-                        <div className="guide-step">
-                            <span className="step-number">2</span>
-                            <p><strong>코드 공유</strong><br/>생성된 '참여 코드'를 학생들에게 공유하여 참여시킵니다.</p>
-                        </div>
-                        <div className="guide-step">
-                            <span className="step-number">3</span>
-                            <p><strong>학습 시작</strong><br/>랭킹과 포트폴리오를 보며 즐거운 투자 학습을 진행합니다.</p>
-                        </div>
-                         <div className="guide-step">
-                            <span className="step-number">4</span>
-                            <p><strong>학습 독려</strong><br/>과제 보상 등 추가 시드머니를 지급하며 학생 참여를 독려합니다.</p>
                         </div>
                     </div>
                 </div>
-                <div className="info-card-landing">
-                    <h2 className="info-title-landing">
-                        <span>새로운 소식</span>
-                        <button className="button-more" onClick={() => onNavigate('notice_board')}>더보기</button>
-                    </h2>
-                    <div className="faq-list" style={{border: 'none'}}>
-                       {latestNotices.map(notice => (
-                           <div key={notice.id} className="faq-item" style={{display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0', alignItems: 'center'}}>
-                               <span style={{
-                                   textOverflow: 'ellipsis',
-                                   whiteSpace: 'nowrap',
-                                   overflow: 'hidden',
-                                   cursor: 'pointer'
-                               }} onClick={() => onNavigate('notice_board')}>{notice.title}</span>
-                               <span style={{fontSize: '0.85rem', color: '#666', flexShrink: 0, marginLeft: '1rem'}}>{new Date(notice.createdAt).toLocaleDateString()}</span>
-                           </div>
-                       ))}
-                    </div>
-                </div>
-                <div className="info-card-landing">
-                    <h2 className="info-title-landing">
-                        <span>자주 묻는 질문</span>
-                        <button className="button-more" onClick={() => onNavigate('qna_board')}>Q&A</button>
-                    </h2>
-                    <div className="faq-list">
-                    {faqData.map((item, index) => (
-                        <div className="faq-item" key={index}>
-                            <button className="faq-question" onClick={() => setActiveFaq(activeFaq === index ? null : index)}>
-                                <span>{item.q}</span>
-                                <span className="faq-icon">{activeFaq === index ? '−' : '+'}</span>
-                            </button>
-                            <div className={`faq-answer ${activeFaq === index ? 'open' : ''}`}>
-                               <p>{item.a}</p>
-                            </div>
-                        </div>
-                    ))}
-                    </div>
-                </div>
-            </div>
 
-             <footer className="footer">
-                <button onClick={() => openPolicy('terms')} className="footer-link">이용약관</button>
-                <button onClick={() => openPolicy('privacy')} className="footer-link">개인정보처리방침</button>
-                <button onClick={(e) => handleFooterLinkClick(e, 'notice')} className="footer-link">공지사항</button>
-                <button onClick={(e) => handleFooterLinkClick(e, 'qna')} className="footer-link">Q&A 게시판</button>
-                <button onClick={() => setActiveModal('admin')} className="footer-link" style={{position: 'absolute', right: 0, opacity: 0.8}}>Admin</button>
-            </footer>
-            
-            {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
-            {activeModal === 'student' && <StudentLoginModal onClose={() => setActiveModal(null)} onJoin={onStudentJoin} />}
-            {activeModal === 'teacherLogin' && <TeacherLoginModal 
-                onClose={() => setActiveModal(null)} 
-                onLoginSuccess={onTeacherLogin}
-                onSwitchToRegister={() => setActiveModal('teacherRegister')}
-                onForgotPassword={() => setActiveModal('passwordReset')}
-            />}
-            {activeModal === 'teacherRegister' && <TeacherRegisterModal
-                onClose={() => setActiveModal(null)}
-                onRegisterSuccess={handleTeacherRegisterSuccess}
-                addToast={addToast}
-                onSwitchToLogin={() => setActiveModal('teacherLogin')}
-            />}
-             {activeModal === 'passwordReset' && <PasswordResetModal
-                onClose={() => setActiveModal(null)}
-                onRequestReset={handlePasswordResetRequest}
-            />}
-            {activeModal === 'admin' && <AdminLoginModal onClose={() => setActiveModal(null)} onLogin={(password) => { onAdminLogin(password); setActiveModal(null); }} />}
-        </div>
+                 <footer className="footer">
+                    <button onClick={() => openPolicy('terms')} className="footer-link">이용약관</button>
+                    <button onClick={() => openPolicy('privacy')} className="footer-link">개인정보처리방침</button>
+                    <button onClick={(e) => handleFooterLinkClick(e, 'notice')} className="footer-link">공지사항</button>
+                    <button onClick={(e) => handleFooterLinkClick(e, 'qna')} className="footer-link">Q&A 게시판</button>
+                    <button onClick={() => setActiveModal('admin')} className="footer-link" style={{position: 'absolute', right: 0, opacity: 0.8}}>Admin</button>
+                </footer>
+                
+                {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
+                {activeModal === 'student' && <StudentLoginModal onClose={() => setActiveModal(null)} onJoin={onStudentJoin} />}
+                {activeModal === 'teacherLogin' && <TeacherLoginModal 
+                    onClose={() => setActiveModal(null)} 
+                    onLoginSuccess={onTeacherLogin}
+                    onSwitchToRegister={() => setActiveModal('teacherRegister')}
+                    onForgotPassword={() => setActiveModal('passwordReset')}
+                />}
+                {activeModal === 'teacherRegister' && <TeacherRegisterModal
+                    onClose={() => setActiveModal(null)}
+                    onRegisterSuccess={handleTeacherRegisterSuccess}
+                    addToast={addToast}
+                    onSwitchToLogin={() => setActiveModal('teacherLogin')}
+                />}
+                 {activeModal === 'passwordReset' && <PasswordResetModal
+                    onClose={() => setActiveModal(null)}
+                    onRequestReset={handlePasswordResetRequest}
+                />}
+                {activeModal === 'admin' && <AdminLoginModal onClose={() => setActiveModal(null)} onLogin={(password) => { onAdminLogin(password); setActiveModal(null); }} />}
+            </div>
+        </>
     );
 };
 
