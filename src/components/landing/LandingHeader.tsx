@@ -78,7 +78,7 @@ const LandingHeader: React.FC<LandingHeaderProps> = ({ onGoHome, onNavigate, add
                         <div className="dropdown-menu">
                             <button className="dropdown-item" onClick={() => { onNavigate('notice_board'); setCommunityMenuOpen(false); }}>공지사항</button>
                             <button className="dropdown-item" onClick={() => { onNavigate('qna_board'); setCommunityMenuOpen(false); }}>Q&A 게시판</button>
-                            <button className="dropdown-item" onClick={() => { handleToastClick('준비 중입니다.'); setCommunityMenuOpen(false); }}>카카오 오픈채팅</button>
+                            <a href="https://open.kakao.com/o/g41y4rVh" target="_blank" rel="noopener noreferrer" className="dropdown-item">카카오 오픈채팅</a>
                         </div>
                     )}
                 </div>
