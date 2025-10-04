@@ -86,7 +86,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                                 <label htmlFor="select-all-students">전체 선택 ({selectedStudentIds.size}/{students.length})</label>
                             </div>
                             <div className="action-buttons-group">
-                                <button onClick={() => setIsBulkRegisterModalOpen(true)} className="button" style={{padding: '0.3rem 0.8rem', fontSize: '0.8rem'}}>학생 일괄 등록</button>
+                                <button onClick={() => setIsBulkRegisterModalOpen(true)} className="button">학생 일괄 등록</button>
                                 <button onClick={() => openBonusModal(selectedStudents)} disabled={selectedStudentIds.size === 0} className="button button-bonus">선택 학생 보너스</button>
                                 <button onClick={() => openBonusModal(students)} disabled={students.length === 0} className="button button-bonus">전체 학생 보너스</button>
                             </div>

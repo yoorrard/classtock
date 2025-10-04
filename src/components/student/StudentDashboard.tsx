@@ -15,7 +15,7 @@ interface StudentDashboardProps {
     isTradingActive: boolean;
 }
 
-const PIE_CHART_COLORS = ['#B29146', '#D4AC0D', '#876445', '#CA955C', '#E5B876', '#F5D4A2', '#6c584c'];
+const PIE_CHART_COLORS = ['#B29146', '#5DADE2', '#48C9B0', '#F4D03F', '#AF7AC5', '#EC7063', '#5D6D7E'];
 
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo, stocks, transactions, classRanking, onTrade, onLogout, isTradingActive }) => {
     const [activeTab, setActiveTab] = useState('portfolio');
