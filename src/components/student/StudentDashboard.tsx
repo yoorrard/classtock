@@ -29,6 +29,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
     const stockAssets = totalAssets - cash;
 
     const totalProfitLoss = useMemo(() => {
+        // Calculate total profit/loss based on seed money (including bonuses)
         return totalAssets - classInfo.seedMoney;
     }, [totalAssets, classInfo.seedMoney]);
 
@@ -130,6 +131,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                     <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>'{classInfo.name}'</p>
                 </div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                     <button onClick={() => window.open('https://finance.naver.com/', '_blank', 'noopener,noreferrer')} className="button" style={{ width: 'auto', padding: '0.5rem 1rem' }}>실시간 정보</button>
                      <button onClick={() => setIsGlossaryOpen(true)} className="button" style={{ width: 'auto', padding: '0.5rem 1rem' }}>용어 사전</button>
                      <button onClick={onLogout} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>로그아웃</button>
                 </div>
