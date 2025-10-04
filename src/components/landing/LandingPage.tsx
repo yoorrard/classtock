@@ -134,8 +134,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                 </div>
 
                 <div className="photo-carousel-container">
-                    <h2 className="info-title-landing" style={{ justifyContent: 'center', marginBottom: '0.5rem' }}>ClassStock과 함께하는 즐거운 수업</h2>
-                    <p style={{ color: 'var(--subtle-text-color)', marginBottom: '2.5rem' }}>학생들이 직접 참여하며 배우는 생생한 금융 교육 현장을 만나보세요.</p>
+                    <h2 className="info-title-landing" style={{ justifyContent: 'center', marginBottom: '0.5rem' }}>한눈에 보는 ClassStock</h2>
+                    <p style={{ color: 'var(--subtle-text-color)', marginBottom: '2.5rem' }}>복잡한 금융 교육, ClassStock의 간편한 기능으로 쉽게 시작하세요.</p>
                     
                     <div className="photo-carousel">
                         {photos.map((src, index) => {
@@ -152,7 +152,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
 
                             return (
                                 <div key={src} className={className}>
-                                    <img src={src} alt={`Classroom scene ${index + 1}`} />
+                                    <img src={src} alt={`앱 화면 예시 ${index + 1}`} />
                                 </div>
                             );
                         })}
