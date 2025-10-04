@@ -170,9 +170,18 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
             <LandingHeader onGoHome={onBack} onNavigate={onNavigate} addToast={addToast} />
             <div className="container">
                 <header className="header" style={{ marginBottom: '2rem', textAlign: 'left' }}>
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
                         <div>
-                            <h1 style={{ fontSize: '1.8rem', margin: 0 }}>Q&A 게시판</h1>
+                            <h1 style={{ 
+                                fontSize: '1.8rem', 
+                                margin: 0, 
+                                color: '#0B6623',
+                                background: 'none',
+                                WebkitBackgroundClip: 'initial',
+                                WebkitTextFillColor: 'initial' 
+                            }}>
+                                Q&amp;A 게시판
+                            </h1>
                             <p style={{ margin: '0.25rem 0 0 0' }}>무엇이든 물어보세요.</p>
                         </div>
                         <button className="button" style={{width: 'auto', padding: '0.5rem 1rem'}} onClick={() => setIsModalOpen(true)}>질문하기</button>

@@ -45,7 +45,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, on
             <header className="header" style={{ marginBottom: '2rem', textAlign: 'left' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
-                        <h1 style={{ fontSize: '1.8rem', margin: 0 }}>교사 대시보드</h1>
+                        <h1 style={{ fontSize: '1.8rem', margin: 0, color: '#0B6623', background: 'none', WebkitBackgroundClip: 'initial', WebkitTextFillColor: 'initial' }}>교사 대시보드</h1>
                         <p style={{ margin: '0.25rem 0 0 0' }}>{hasClasses ? '내 학급 목록입니다.' : '학급을 만들고 관리하세요.'}</p>
                     </div>
                     <div style={{display: 'flex', gap: '0.5rem'}}>
