@@ -14,7 +14,8 @@ const photos = [
     'assets/gallery-1.png',
     'assets/gallery-2.png',
     'assets/gallery-3.png',
-    'assets/gallery-4.png'
+    'assets/gallery-4.png',
+    'assets/gallery-5.png'
 ];
 
 interface LandingPageProps {
