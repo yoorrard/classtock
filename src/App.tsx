@@ -26,62 +26,42 @@ const App: React.FC = () => {
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
     
-    // --- AUTO TIME SIMULATION (KST 4 PM) ---
+    // --- AUTO PRICE UPDATE (KST 16:10 Daily) ---
     useEffect(() => {
-        const lastUpdateTimestampStr = localStorage.getItem('classstock_lastUpdateTime');
+        const lastUpdateDateStr = localStorage.getItem('classstock_lastUpdateDate');
+        
         const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+        const KST_OFFSET = 9 * 60 * 60 * 1000;
+        const kstNow = new Date(utc + KST_OFFSET);
+        
+        const todayKSTString = kstNow.toISOString().split('T')[0];
 
-        const calculateDaysToSimulate = (lastTime: number, currentTime: number): number => {
-            const KST_OFFSET = 9 * 60 * 60 * 1000;
-            const KST_UPDATE_HOUR = 16;
-            
-            const lastDate = new Date(lastTime);
-            const currentDate = new Date(currentTime);
-            
-            const getUpdatePointFor = (date: Date): Date => {
-                const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
-                const kstTime = new Date(utc + KST_OFFSET);
-                
-                const updatePoint = new Date(kstTime);
-                updatePoint.setHours(KST_UPDATE_HOUR, 0, 0, 0);
-
-                if (kstTime < updatePoint) {
-                    updatePoint.setDate(updatePoint.getDate() - 1);
-                }
-                return updatePoint;
-            };
-
-            const lastUpdatePoint = getUpdatePointFor(lastDate);
-            const currentUpdatePoint = getUpdatePointFor(currentDate);
-
-            lastUpdatePoint.setHours(12,0,0,0);
-            currentUpdatePoint.setHours(12,0,0,0);
-
-            const diffTime = currentUpdatePoint.getTime() - lastUpdatePoint.getTime();
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-            return Math.max(0, diffDays);
-        };
-
-        if (lastUpdateTimestampStr) {
-            const lastUpdateTime = parseInt(lastUpdateTimestampStr, 10);
-            const daysToSimulate = calculateDaysToSimulate(lastUpdateTime, now.getTime());
-
-            if (daysToSimulate > 0) {
-                let currentStocks = stocks;
-                for (let i = 0; i < daysToSimulate; i++) {
-                    currentStocks = currentStocks.map(stock => {
-                        const changePercent = (Math.random() - 0.45) * 0.1; // -4.5% to +5.5% change
-                        const newPrice = Math.max(100, Math.round(stock.price * (1 + changePercent) / 100) * 100);
-                        return { ...stock, price: newPrice };
-                    });
-                }
-                setStocks(currentStocks);
-            }
+        const isUpdateTimePassed = kstNow.getUTCHours() > 16 || (kstNow.getUTCHours() === 16 && kstNow.getUTCMinutes() >= 10);
+        
+        let needsUpdate = false;
+        if (!lastUpdateDateStr) {
+            // First time user. Update if it's past update time.
+            needsUpdate = isUpdateTimePassed;
+        } else {
+            // Returning user. Update if last update was before today AND it's past update time.
+            needsUpdate = (lastUpdateDateStr < todayKSTString) && isUpdateTimePassed;
         }
-        
-        localStorage.setItem('classstock_lastUpdateTime', now.getTime().toString());
-        
+
+        if (needsUpdate) {
+            setStocks(prevStocks => prevStocks.map(stock => {
+                const changePercent = (Math.random() - 0.45) * 0.1; // -4.5% to +5.5% change
+                const newPrice = Math.max(100, Math.round(stock.price * (1 + changePercent) / 100) * 100);
+                return { ...stock, price: newPrice };
+            }));
+            localStorage.setItem('classstock_lastUpdateDate', todayKSTString);
+        } else if (!lastUpdateDateStr) {
+            // First time user, but before update time.
+            // Set last update to yesterday so it can update later today if they reopen.
+            const yesterdayKST = new Date(kstNow.getTime());
+            yesterdayKST.setUTCDate(yesterdayKST.getUTCDate() - 1);
+            localStorage.setItem('classstock_lastUpdateDate', yesterdayKST.toISOString().split('T')[0]);
+        }
     }, []);
 
 

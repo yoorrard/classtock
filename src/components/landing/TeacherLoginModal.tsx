@@ -4,8 +4,9 @@ interface TeacherLoginModalProps {
     onClose: () => void;
     onLoginSuccess: () => void;
     onSwitchToRegister: () => void;
+    onForgotPassword: () => void;
 }
-const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginSuccess, onSwitchToRegister }) => {
+const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginSuccess, onSwitchToRegister, onForgotPassword }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -73,10 +74,15 @@ const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginS
                             {showPassword ? EyeClosedIcon : EyeOpenIcon}
                         </button>
                     </div>
-                    <button type="submit" className="button" style={{ width: '100%', marginBottom: '1rem' }}>로그인</button>
+                    <div style={{ textAlign: 'right', width: '100%', marginTop: '-1rem', marginBottom: '1.5rem' }}>
+                        <button type="button" className="button-link" style={{ marginTop: 0 }} onClick={onForgotPassword}>
+                            비밀번호를 잊으셨나요?
+                        </button>
+                    </div>
+                    <button type="submit" className="button" style={{ width: '100%' }}>로그인</button>
                 </form>
 
-                <button type="button" className="button-link" style={{marginTop: 0}} onClick={onSwitchToRegister}>
+                <button type="button" className="button-link" onClick={onSwitchToRegister}>
                     계정이 없으신가요? 회원가입
                 </button>
             </div>
