@@ -68,7 +68,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
       {
         icon: '⚙️',
         title: '자유로운 맞춤 설정',
-        description: '활동 기간, 시드머니, 투자 종목을 자유롭게 설정하여 맞춤형 금융 교육을 설계합니다.',
+        description: '활동 기간, 시드머니, 거래 수수료를 자유롭게 설정하여 맞춤형 금융 교육을 설계합니다.',
       },
     ];
     
@@ -88,8 +88,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
             />
             <div className="container" style={{ position: 'relative', textAlign: 'center' }}>
                 <header className="header">
-                    <h1>ClassStock</h1>
-                    <p>선생님과 함께하는 즐거운 금융 교실</p>
+                    <h1>
+                        <span className="header-line-1">선생님과 함께하는</span>
+                        <span className="header-line-2">쉽고 재밌는 경제 교실</span>
+                        <span className="header-line-3">클래스탁!</span>
+                    </h1>
                 </header>
                 <div className="role-selection">
                     <div className="role-card" role="region" aria-labelledby="teacher_title">
@@ -133,7 +136,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                         <div className="guide-steps">
                             <div className="guide-step">
                                 <span className="step-number">1</span>
-                                <p><strong>학급 개설</strong><br/>새 학급을 만들어 활동 기간과 시드머니을 설정합니다.</p>
+                                <p><strong>학급 개설</strong><br/>새 학급을 만들어 활동 기간과 시드머니를 설정합니다.</p>
                             </div>
                             <div className="guide-step">
                                 <span className="step-number">2</span>
@@ -171,7 +174,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                     <div className="info-card-landing">
                         <h2 className="info-title-landing">
                             <span>자주 묻는 질문</span>
-                            <button className="button-more" onClick={() => onNavigate('qna_board')}>Q&A</button>
                         </h2>
                         <div className="faq-list">
                         {faqData.map((item, index) => (
