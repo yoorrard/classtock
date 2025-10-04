@@ -9,7 +9,8 @@ interface StudentDashboardProps {
     classInfo: ClassInfo;
     stocks: Stock[];
     transactions: Transaction[];
-    classRanking: (StudentInfo & { totalAssets: number })[];
+// FIX: Update classRanking prop to include totalProfit and totalProfitRate to match data from App.tsx.
+    classRanking: (StudentInfo & { totalAssets: number; totalProfit: number; totalProfitRate: number; })[];
     onTrade: (studentId: string, stockCode: string, quantity: number, type: TradeType) => void;
     onLogout: () => void;
     isTradingActive: boolean;
@@ -21,6 +22,8 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
     const [activeTab, setActiveTab] = useState('portfolio');
     const [tradeInfo, setTradeInfo] = useState<TradeInfo | null>(null);
     const [infoModalStock, setInfoModalStock] = useState<Stock | null>(null);
+    // FIX: Add state for sorting the ranking board.
+    const [rankingSortBy, setRankingSortBy] = useState<'totalAssets' | 'profitRate'>('totalAssets');
     const { totalAssets, cash, portfolio } = student;
     const stockAssets = totalAssets - cash;
 
@@ -44,6 +47,16 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
             };
         }).filter((p): p is NonNullable<typeof p> => p !== null);
     }, [portfolio, stocks]);
+
+    // FIX: Add memoized sorting for the ranking board data.
+    const sortedStudentsForRanking = useMemo(() => {
+        return [...classRanking].sort((a, b) => {
+            if (rankingSortBy === 'profitRate') {
+                return b.totalProfitRate - a.totalProfitRate;
+            }
+            return b.totalAssets - a.totalAssets; // default to totalAssets
+        });
+    }, [classRanking, rankingSortBy]);
 
     const handleConfirmTrade = (quantity: number) => {
         if (tradeInfo) {
@@ -226,7 +239,28 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                         )}
                     </li>
                 )) : <div className="info-card" style={{textAlign: 'center'}}><p>거래 내역이 없습니다.</p></div>}</ul>}
-                {activeTab === 'ranking' && <RankingBoard students={classRanking} />}
+                {activeTab === 'ranking' && (
+                    <div className="info-section">
+                        <div className="student-management-bar">
+                             <span>정렬 기준:</span>
+                             <div className="action-buttons-group">
+                                 <button 
+                                     onClick={() => setRankingSortBy('totalAssets')} 
+                                     className={`button ${rankingSortBy === 'totalAssets' ? '' : 'button-secondary'}`}
+                                 >
+                                     총 자산
+                                 </button>
+                                 <button 
+                                     onClick={() => setRankingSortBy('profitRate')} 
+                                     className={`button ${rankingSortBy === 'profitRate' ? '' : 'button-secondary'}`}
+                                 >
+                                     투자 수익률
+                                 </button>
+                             </div>
+                        </div>
+                        <RankingBoard students={sortedStudentsForRanking} sortBy={rankingSortBy} />
+                    </div>
+                )}
             </div>
             {tradeInfo && <TradeModal tradeInfo={tradeInfo} student={student} classInfo={classInfo} onClose={() => setTradeInfo(null)} onConfirm={handleConfirmTrade} />}
             {infoModalStock && <StockInfoModal stock={infoModalStock} onClose={() => setInfoModalStock(null)} />}

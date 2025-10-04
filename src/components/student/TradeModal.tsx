@@ -11,7 +11,7 @@ interface TradeModalProps {
 
 const TradeModal: React.FC<TradeModalProps> = ({ tradeInfo, student, classInfo, onClose, onConfirm }) => {
     const { type, stock } = tradeInfo;
-    const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState('1');
 
     const commissionRatePercent = classInfo.hasCommission ? classInfo.commissionRate : 0;
     const commissionRateMultiplier = 1 + (commissionRatePercent / 100);
@@ -19,13 +19,22 @@ const TradeModal: React.FC<TradeModalProps> = ({ tradeInfo, student, classInfo, 
     const maxBuy = Math.floor(student.cash / (stock.price * commissionRateMultiplier));
     const maxSell = student.portfolio.find(p => p.stockCode === stock.code)?.quantity || 0;
     const maxQuantity = type === 'buy' ? maxBuy : maxSell;
+    
+    const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Allow only empty string or positive integers
+        if (value === '' || /^\d+$/.test(value)) {
+            setQuantity(value);
+        }
+    };
 
-    const total = stock.price * quantity;
+    const numericQuantity = quantity === '' ? 0 : parseInt(quantity, 10);
+    const total = stock.price * numericQuantity;
     const commission = total * (commissionRatePercent / 100);
     const finalAmount = type === 'buy' ? total + commission : total - commission;
-    const isConfirmDisabled = quantity <= 0 || quantity > maxQuantity;
+    const isConfirmDisabled = numericQuantity <= 0 || numericQuantity > maxQuantity;
 
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onConfirm(quantity); };
+    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onConfirm(numericQuantity); };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -35,7 +44,7 @@ const TradeModal: React.FC<TradeModalProps> = ({ tradeInfo, student, classInfo, 
                     <div className="input-group"><label>현재가: {stock.price.toLocaleString()}원</label></div>
                     <div className="input-group">
                         <label htmlFor="quantity">수량 (최대: {maxQuantity.toLocaleString()}주)</label>
-                        <input id="quantity" name="quantity" type="number" min="1" max={maxQuantity} className="input-field" value={quantity} onChange={e => setQuantity(Number(e.target.value))} required />
+                        <input id="quantity" name="quantity" type="number" min="0" max={maxQuantity} className="input-field" value={quantity} onChange={handleQuantityChange} required />
                     </div>
                     <div className="trade-summary">
                         <p><span>주문금액</span><span>{total.toLocaleString()}원</span></p>

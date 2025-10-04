@@ -412,6 +412,10 @@
             text-align: left;
         }
         
+        .modal-content-wide {
+            max-width: 720px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
@@ -490,6 +494,8 @@
         }
         .class-card p { margin: 0.5rem 0; color: var(--subtle-text-color); font-size: 0.95rem; }
         .class-card p strong { color: var(--text-color); font-weight: 700; }
+        .class-card p.positive { color: var(--positive-color); }
+        .class-card p.negative { color: var(--negative-color); }
         .class-card-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
 
         /* Tabs */
@@ -559,7 +565,7 @@
             margin-bottom: 1rem; border: 1px solid var(--border-color);
             display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center;
         }
-        .portfolio-item-info .item-name { font-size: 1.2rem; font-weight: 700; color: var(--text-color); }
+        .portfolio-item-info .item-name { font-size: 1.2rem; font-weight: 700; color: var(--text-color); margin-bottom: 0.75rem; }
         .item-name small { font-weight: 500; color: #666; font-size: 0.9rem; margin-left: 0.5rem; }
         .portfolio-item-details { display: flex; gap: 1.5rem; font-size: 0.9rem; color: var(--subtle-text-color); flex-wrap: wrap; }
         .detail-group span { display: block; line-height: 1.4; }
@@ -569,15 +575,34 @@
         .portfolio-item-performance.neutral { color: var(--text-color); }
         .current-valuation { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-color); }
         .profit-summary { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; font-size: 1rem; font-weight: 700; }
-        .ranking-list-item .rank { font-weight: 700; font-size: 1.2rem; width: 30px; text-align: center; color: var(--primary-color); }
+        .ranking-list-item .rank { flex-shrink: 0; width: 40px; margin-right: 1rem; font-weight: 700; font-size: 1.2rem; text-align: center; color: var(--primary-color); }
 
         .portfolio-summary {
-            display: grid; grid-template-columns: 1fr; gap: 0.75rem; padding: 1rem;
-            margin-bottom: 1.5rem; border-radius: 8px; background-color: var(--light-bg);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 1.5rem 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: var(--border-radius);
+            background-color: var(--light-bg);
+            text-align: center;
         }
-        .portfolio-summary .summary-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
-        .portfolio-summary .summary-item span:first-child { color: var(--subtle-text-color); }
-        .portfolio-summary .summary-item strong { font-size: 1.1rem; font-weight: 700; }
+        .portfolio-summary .summary-item {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .portfolio-summary .summary-item span:first-child {
+            color: var(--subtle-text-color);
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+        }
+        .portfolio-summary .summary-item strong {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
         .modal-content h4 { text-align: left; margin-top: 0; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
 
         /* Student Dashboard */
@@ -685,6 +710,27 @@
         .file-input-label:hover { background-color: #dde2e6; }
         .attached-file-info { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.9rem; }
 
+        /* Hide number input spinners globally, except in modals */
+        /* This rule is to remove unwanted spinners appearing in the layout, e.g., near tabs */
+        /* Chrome, Safari, Edge, Opera */
+        body input[type="number"]::-webkit-outer-spin-button,
+        body input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .modal-content input[type="number"]::-webkit-outer-spin-button,
+        .modal-content input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: auto;
+        }
+
+        /* Firefox */
+        body input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .modal-content input[type="number"] {
+            -moz-appearance: auto;
+        }
+
         @media (max-width: 480px) {
             .features-grid { grid-template-columns: 1fr; gap: 1.25rem; }
             .toast-container { top: 10px; right: 10px; left: 10px; width: auto; }
@@ -699,7 +745,6 @@
             .role-card { flex: 1; }
             .class-list { grid-template-columns: 1fr 1fr; }
             .info-section-grid, .stock-manager-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-            .portfolio-summary { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
         }
 
         @media (min-width: 1200px) {

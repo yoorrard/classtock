@@ -186,6 +186,15 @@ const App: React.FC = () => {
         addToast(message, 'success');
     };
 
+    const handleDeleteStudent = (studentId: string) => {
+        const studentToDelete = students.find(s => s.id === studentId);
+        if (!studentToDelete) return;
+
+        setStudents(prev => prev.filter(s => s.id !== studentId));
+        setTransactions(prev => prev.filter(t => t.studentId !== studentId));
+        addToast(`'${studentToDelete.nickname}' 학생이 학급에서 제외되었습니다.`, 'success');
+    };
+
     const handleTrade = (studentId: string, stockCode: string, quantity: number, type: 'buy' | 'sell') => {
         const studentIndex = students.findIndex(s => s.id === studentId);
         const stock = stocks.find(s => s.code === stockCode);
@@ -355,22 +364,40 @@ const App: React.FC = () => {
                  if (!selectedClass) { setView('teacher_dashboard'); return null; }
                 const classStudents = students
                     .filter(s => s.classId === selectedClass.id)
-                    .map(s => ({ ...s, totalAssets: calculateTotalAssets(s, stocks) }));
+                    .map(s => {
+                        const totalAssets = calculateTotalAssets(s, stocks);
+                        const totalBonus = transactions
+                            .filter(t => t.studentId === s.id && t.type === 'bonus')
+                            .reduce((sum, t) => sum + t.price, 0);
+                        const totalProfit = totalAssets - selectedClass.seedMoney - totalBonus;
+                        const totalProfitRate = selectedClass.seedMoney > 0 ? (totalProfit / selectedClass.seedMoney) * 100 : 0;
+                        return { ...s, totalAssets, totalProfit, totalProfitRate };
+                    });
 
                 return <ClassDetailView 
                     classInfo={selectedClass} 
                     students={classStudents}
                     stocks={stocks}
+                    transactions={transactions}
                     onAwardBonus={handleAwardBonus}
                     onBack={() => { setSelectedClassId(null); setView('teacher_dashboard'); }}
                     addToast={addToast}
                     onBulkRegister={handleBulkRegisterStudents}
+                    onDeleteStudent={handleDeleteStudent}
                 />;
             case 'student_dashboard':
                 if (!currentStudent || !studentClass) { setView('landing'); return null; }
                  const classStudentsForRanking = students
                     .filter(s => s.classId === studentClass.id)
-                    .map(s => ({ ...s, totalAssets: calculateTotalAssets(s, stocks) }));
+                    .map(s => {
+                        const totalAssets = calculateTotalAssets(s, stocks);
+                        const totalBonus = transactions
+                            .filter(t => t.studentId === s.id && t.type === 'bonus')
+                            .reduce((sum, t) => sum + t.price, 0);
+                        const totalProfit = totalAssets - studentClass.seedMoney - totalBonus;
+                        const totalProfitRate = studentClass.seedMoney > 0 ? (totalProfit / studentClass.seedMoney) * 100 : 0;
+                        return { ...s, totalAssets, totalProfit, totalProfitRate };
+                    });
                 const studentWithAssets = {...currentStudent, totalAssets: calculateTotalAssets(currentStudent, stocks)};
 
                 return <StudentDashboard 
