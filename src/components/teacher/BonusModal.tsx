@@ -7,15 +7,27 @@ interface BonusModalProps {
     onConfirm: (amount: number, reason: string) => void;
 }
 const BonusModal: React.FC<BonusModalProps> = ({ students, onClose, onConfirm }) => {
-    const [amount, setAmount] = useState<number>(10000);
+    const [amount, setAmount] = useState<string>('10000');
     const [reason, setReason] = useState<string>('');
+    
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (amount > 0 && amount <= 10000000) {
-            onConfirm(amount, reason.trim());
+        const numericAmount = Number(amount);
+        if (numericAmount > 0 && numericAmount <= 10000000) {
+            onConfirm(numericAmount, reason.trim());
         }
     };
+
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        if (value === '' || /^\d+$/.test(value)) {
+            setAmount(value);
+        }
+    };
+
     const recipientText = students.length === 1 ? students[0].nickname : `${students.length}명`;
+    const numericAmountForCheck = Number(amount);
+    const isConfirmDisabled = !(numericAmountForCheck > 0 && numericAmountForCheck <= 10000000);
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -28,7 +40,7 @@ const BonusModal: React.FC<BonusModalProps> = ({ students, onClose, onConfirm })
                     <p style={{textAlign: 'left', marginTop: 0}}><strong>{recipientText}</strong>에게 보너스를 지급합니다.</p>
                     <div className="input-group">
                         <label htmlFor="bonus-amount">지급할 금액 (1 ~ 10,000,000)</label>
-                        <input id="bonus-amount" type="number" min="1" max="10000000" step="1" className="input-field" value={amount} onChange={e => setAmount(Number(e.target.value))} required />
+                        <input id="bonus-amount" type="number" min="1" max="10000000" step="1" className="input-field" value={amount} onChange={handleAmountChange} required />
                     </div>
                      <div className="input-group">
                         <label htmlFor="bonus-reason">지급 사유 (선택 사항)</label>
@@ -36,7 +48,7 @@ const BonusModal: React.FC<BonusModalProps> = ({ students, onClose, onConfirm })
                     </div>
                     <div className="action-buttons">
                         <button type="button" className="button button-secondary" onClick={onClose}>취소</button>
-                        <button type="submit" className="button">지급하기</button>
+                        <button type="submit" className="button" disabled={isConfirmDisabled}>지급하기</button>
                     </div>
                 </form>
             </div>
