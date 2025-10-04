@@ -23,6 +23,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
     const [activeModal, setActiveModal] = useState<'student' | 'teacherLogin' | 'teacherRegister' | 'admin' | 'passwordReset' | null>(null);
     const latestNotices = notices.slice(0, 3);
+    const [currentPhoto, setCurrentPhoto] = useState(0);
+    const photos = [
+        './assets/gallery-1.png',
+        './assets/gallery-2.png',
+        './assets/gallery-3.png',
+        './assets/gallery-4.png',
+        './assets/gallery-5.png'
+    ];
+    const totalPhotos = photos.length;
+
+    const handleNext = () => {
+        setCurrentPhoto((prev) => (prev + 1) % totalPhotos);
+    };
+
+    const handlePrev = () => {
+        setCurrentPhoto((prev) => (prev - 1 + totalPhotos) % totalPhotos);
+    };
 
     const openPolicy = (type: 'terms' | 'privacy') => {
         if (type === 'terms') {
@@ -115,6 +132,40 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                         </button>
                     </div>
                 </div>
+
+                <div className="photo-carousel-container">
+                    <h2 className="info-title-landing" style={{ justifyContent: 'center', marginBottom: '0.5rem' }}>ClassStock과 함께하는 즐거운 수업</h2>
+                    <p style={{ color: 'var(--subtle-text-color)', marginBottom: '2.5rem' }}>학생들이 직접 참여하며 배우는 생생한 금융 교육 현장을 만나보세요.</p>
+                    
+                    <div className="photo-carousel">
+                        {photos.map((src, index) => {
+                            let className = 'photo-card';
+                            if (index === currentPhoto) {
+                                className += ' active';
+                            } else if (index === (currentPhoto - 1 + totalPhotos) % totalPhotos) {
+                                className += ' prev';
+                            } else if (index === (currentPhoto + 1) % totalPhotos) {
+                                className += ' next';
+                            } else {
+                                className += ' hidden';
+                            }
+
+                            return (
+                                <div key={src} className={className}>
+                                    <img src={src} alt={`Classroom scene ${index + 1}`} />
+                                </div>
+                            );
+                        })}
+                    </div>
+                    
+                    <button onClick={handlePrev} className="carousel-nav-button prev-btn" aria-label="이전 사진">
+                        &#8249;
+                    </button>
+                    <button onClick={handleNext} className="carousel-nav-button next-btn" aria-label="다음 사진">
+                        &#8250;
+                    </button>
+                </div>
+
 
                 <div className="info-sections-landing">
                      <div className="info-card-landing">
