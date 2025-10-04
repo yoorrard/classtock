@@ -851,6 +851,49 @@
             color: var(--subtle-text-color);
             white-space: pre-wrap;
         }
+        
+        /* Stock Info Chart Styles */
+        .stock-info-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .stock-info-header h2 {
+            margin: 0; font-size: 1.5rem; font-weight: 700;
+        }
+        .stock-info-header p {
+            margin: 0.25rem 0 0.5rem 0; font-size: 1rem; color: var(--subtle-text-color);
+        }
+        .stock-info-header strong {
+            font-size: 2rem; font-weight: 700;
+        }
+        
+        .stock-chart-container {
+            width: 100%;
+            margin: 0 auto 1.5rem auto;
+        }
+        .chart-svg {
+            width: 100%;
+            height: auto;
+        }
+        .chart-line-up { stroke: var(--positive-color); }
+        .chart-line-down { stroke: var(--negative-color); }
+        .avg-price-line {
+            stroke: var(--subtle-text-color);
+            stroke-dasharray: 4 4;
+            stroke-width: 1.5;
+        }
+        .axis-label, .avg-price-label {
+            font-size: 10px;
+            fill: var(--subtle-text-color);
+            font-family: 'Gmarket Sans', sans-serif;
+            font-weight: 500;
+        }
+        .avg-price-label {
+            font-weight: 700;
+        }
+
 
         @media (max-width: 480px) {
             .features-grid { grid-template-columns: 1fr; gap: 1.25rem; }

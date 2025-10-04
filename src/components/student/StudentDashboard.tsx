@@ -21,7 +21,7 @@ const PIE_CHART_COLORS = ['#B29146', '#5DADE2', '#48C9B0', '#F4D03F', '#AF7AC5',
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo, stocks, transactions, classRanking, onTrade, onLogout, isTradingActive }) => {
     const [activeTab, setActiveTab] = useState('portfolio');
     const [tradeInfo, setTradeInfo] = useState<TradeInfo | null>(null);
-    const [infoModalStock, setInfoModalStock] = useState<Stock | null>(null);
+    const [infoModalData, setInfoModalData] = useState<{ stock: Stock, averagePrice?: number } | null>(null);
     const [rankingSortBy, setRankingSortBy] = useState<'totalAssets' | 'profitRate'>('totalAssets');
     const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
     
@@ -35,6 +35,11 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
 
     const profitClass = totalProfitLoss > 0 ? 'positive' : totalProfitLoss < 0 ? 'negative' : '';
     const profitPrefix = totalProfitLoss > 0 ? '▲ ' : totalProfitLoss < 0 ? '▼ ' : '';
+
+    const handleOpenStockInfo = (stock: Stock) => {
+        const ownedStock = portfolio.find(p => p.stockCode === stock.code);
+        setInfoModalData({ stock, averagePrice: ownedStock?.averagePrice });
+    };
 
     const fullPortfolio = useMemo(() => {
         return portfolio.map(item => {
@@ -211,7 +216,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                     const ownedStock = portfolio.find(p => p.stockCode === stock.code);
                     const canSell = ownedStock && ownedStock.quantity > 0;
                     return (
-                        <li key={stock.code} className="data-list-item" style={{cursor: 'pointer'}} onClick={() => setInfoModalStock(stock)}>
+                        <li key={stock.code} className="data-list-item" style={{cursor: 'pointer'}} onClick={() => handleOpenStockInfo(stock)}>
                             <div className="stock-info">
                                 <span>{stock.name}</span>
                                 <small>{stock.sector}</small>
@@ -268,7 +273,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
                 )}
             </div>
             {tradeInfo && <TradeModal tradeInfo={tradeInfo} student={student} classInfo={classInfo} onClose={() => setTradeInfo(null)} onConfirm={handleConfirmTrade} />}
-            {infoModalStock && <StockInfoModal stock={infoModalStock} onClose={() => setInfoModalStock(null)} />}
+            {infoModalData && <StockInfoModal stock={infoModalData.stock} averagePrice={infoModalData.averagePrice} onClose={() => setInfoModalData(null)} />}
             {isGlossaryOpen && <GlossaryModal onClose={() => setIsGlossaryOpen(false)} />}
         </div>
     );
