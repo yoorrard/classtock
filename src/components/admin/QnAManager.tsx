@@ -17,12 +17,6 @@ const QnAManager: React.FC<QnAManagerProps> = ({ posts, onAnswer, onDelete }) =>
             setAnsweringPost(null);
         }
     };
-
-    const handleDeleteClick = (postId: string) => {
-        if (window.confirm('이 질문을 정말로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-            onDelete(postId);
-        }
-    };
     
     return (
         <div>
@@ -41,7 +35,11 @@ const QnAManager: React.FC<QnAManagerProps> = ({ posts, onAnswer, onDelete }) =>
                                 {post.answer ? '답변 완료' : '답변 대기'}
                             </span>
                              <button 
-                                onClick={() => handleDeleteClick(post.id)}
+                                onClick={() => {
+                                    if (window.confirm('이 질문을 정말로 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                                        onDelete(post.id);
+                                    }
+                                }}
                                 className="button button-danger" 
                                 style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}}
                             >
