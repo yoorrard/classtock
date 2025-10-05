@@ -34,34 +34,36 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
     const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
     const [activeModal, setActiveModal] = useState<'student' | 'teacherLogin' | 'teacherRegister' | 'admin' | 'passwordReset' | null>(null);
-    const [activePopupNotice, setActivePopupNotice] = useState<PopupNotice | null>(null);
+    const [activePopupNotices, setActivePopupNotices] = useState<PopupNotice[]>([]);
     const latestNotices = notices.slice(0, 3);
     const [currentPhoto, setCurrentPhoto] = useState(0);
 
     const totalPhotos = photos.length;
 
     useEffect(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize to start of day
+        // --- KST Time Logic ---
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+        const KST_OFFSET = 9 * 60 * 60 * 1000;
+        const kstNow = new Date(utc + KST_OFFSET);
+        
+        const todayKSTStr = kstNow.toISOString().split('T')[0];
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        const activeNotices = popupNotices.filter(notice => {
+            const startDate = new Date(`${notice.startDate}T00:00:00+09:00`);
+            const endDate = new Date(`${notice.endDate}T23:59:59+09:00`);
 
-        const activeNotice = popupNotices.find(notice => {
-            const startDate = new Date(notice.startDate);
-            const endDate = new Date(notice.endDate);
-            endDate.setHours(23, 59, 59, 999); // Normalize to end of day
-
-            const isWithinDateRange = today >= startDate && today <= endDate;
+            const isWithinDateRange = kstNow >= startDate && kstNow <= endDate;
             if (!isWithinDateRange) return false;
 
             const dismissedDate = localStorage.getItem(`classstock_popup_dismissed_${notice.id}`);
-            const isDismissedToday = dismissedDate === todayStr;
+            const isDismissedToday = dismissedDate === todayKSTStr;
 
             return !isDismissedToday;
         });
         
-        if (activeNotice) {
-            setActivePopupNotice(activeNotice);
+        if (activeNotices.length > 0) {
+            setActivePopupNotices(activeNotices);
         }
     }, [popupNotices]);
 
@@ -305,7 +307,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
                     onRequestReset={handlePasswordResetRequest}
                 />}
                 {activeModal === 'admin' && <AdminLoginModal onClose={() => setActiveModal(null)} onLogin={(password) => { onAdminLogin(password); setActiveModal(null); }} />}
-                {activePopupNotice && <PopupNoticeModal notice={activePopupNotice} onClose={() => setActivePopupNotice(null)} />}
+                {activePopupNotices.length > 0 && 
+                    <PopupNoticeModal 
+                        notice={activePopupNotices[0]} 
+                        onClose={() => setActivePopupNotices(prev => prev.slice(1))} 
+                    />
+                }
             </div>
         </>
     );
