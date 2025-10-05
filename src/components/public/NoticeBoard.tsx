@@ -28,7 +28,8 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices, onBack, onNavigate, 
                         color: '#0B6623',
                         background: 'none',
                         WebkitBackgroundClip: 'initial',
-                        WebkitTextFillColor: 'initial'
+                        WebkitTextFillColor: 'initial',
+                        alignItems: 'flex-start'
                     }}>공지사항</h1>
                     <p style={{ margin: '0.25rem 0 0 0' }}>ClassStock의 새로운 소식을 확인하세요.</p>
                 </header>
