@@ -4,48 +4,71 @@ import LandingHeader from '../landing/LandingHeader';
 
 interface QnABoardProps {
     posts: QnAPost[];
-    onAskQuestion: (data: Omit<QnAPost, 'id' | 'createdAt'>) => void;
+    onAskQuestion: (data: { title: string; question: string; isSecret: boolean; }) => void;
     onBack: () => void;
     addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
     onNavigate: (view: View) => void;
     context?: 'landing' | 'teacher';
+    currentUserEmail?: string | null;
 }
 
-const PasswordPromptModal: React.FC<{
+const AskQuestionModal: React.FC<{
     onClose: () => void;
-    onConfirm: (password: string) => void;
+    onConfirm: (data: { title: string, question: string, isSecret: boolean }) => void;
 }> = ({ onClose, onConfirm }) => {
-    const [password, setPassword] = useState('');
+    const [title, setTitle] = useState('');
+    const [question, setQuestion] = useState('');
+    const [isSecret, setIsSecret] = useState(false);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onConfirm(password);
+        if (question.trim() && title.trim()) {
+            onConfirm({
+                title: title.trim(),
+                question: question.trim(),
+                isSecret,
+            });
+        }
     };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <header className="modal-header">
-                    <h2>비밀번호 확인</h2>
+                    <h2>질문하기</h2>
                     <button onClick={onClose} className="close-button" aria-label="닫기">&times;</button>
                 </header>
                 <form onSubmit={handleSubmit}>
                     <div className="input-group">
-                        <label htmlFor="secret-password">게시글 작성 시 설정한 4자리 비밀번호를 입력하세요.</label>
+                        <label htmlFor="question-title">제목</label>
                         <input
-                            id="secret-password"
-                            type="password"
-                            inputMode="numeric"
-                            maxLength={4}
+                            id="question-title"
+                            type="text"
                             className="input-field"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            placeholder="질문 제목을 입력하세요."
                             required
-                            autoFocus
                         />
+                    </div>
+                    <div className="input-group">
+                        <label htmlFor="question-content">궁금한 점을 남겨주세요.</label>
+                        <textarea
+                            id="question-content"
+                            className="textarea-field"
+                            value={question}
+                            onChange={e => setQuestion(e.target.value)}
+                            placeholder="서비스 이용 중 궁금한 점이나 불편한 점을 자세히 적어주세요."
+                            required
+                        />
+                    </div>
+                    <div className="agreement-group" style={{background: '#f7f9fc', padding: '0.75rem', borderRadius: '8px'}}>
+                        <input type="checkbox" id="secret-post" checked={isSecret} onChange={e => setIsSecret(e.target.checked)} />
+                        <label htmlFor="secret-post">비밀글로 설정하기</label>
                     </div>
                     <div className="action-buttons">
                         <button type="button" className="button button-secondary" onClick={onClose}>취소</button>
-                        <button type="submit" className="button">확인</button>
+                        <button type="submit" className="button">등록하기</button>
                     </div>
                 </form>
             </div>
@@ -53,116 +76,33 @@ const PasswordPromptModal: React.FC<{
     );
 };
 
-const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addToast, onNavigate, context = 'landing' }) => {
+
+const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addToast, onNavigate, context = 'landing', currentUserEmail }) => {
     const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [postToVerify, setPostToVerify] = useState<QnAPost | null>(null);
-    const [unlockedPosts, setUnlockedPosts] = useState<Set<string>>(new Set());
-
-    const AskQuestionModal: React.FC<{
-        onClose: () => void;
-        onConfirm: (data: Omit<QnAPost, 'id' | 'createdAt' | 'answeredAt' | 'answer'>) => void;
-    }> = ({ onClose, onConfirm }) => {
-        const [question, setQuestion] = useState('');
-        const [author, setAuthor] = useState(context === 'teacher' ? '선생님' : '');
-        const [isSecret, setIsSecret] = useState(false);
-        const [password, setPassword] = useState('');
-
-        const handleSubmit = (e: React.FormEvent) => {
-            e.preventDefault();
-            if (question.trim() && author.trim()) {
-                onConfirm({
-                    question: question.trim(),
-                    author: author.trim(),
-                    isSecret,
-                    password: isSecret ? password : undefined,
-                });
-            }
-        };
-
-        return (
-            <div className="modal-overlay" onClick={onClose}>
-                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                    <header className="modal-header">
-                        <h2>질문하기</h2>
-                        <button onClick={onClose} className="close-button" aria-label="닫기">&times;</button>
-                    </header>
-                    <form onSubmit={handleSubmit}>
-                        <div className="input-group">
-                            <label htmlFor="question-author">작성자</label>
-                            <input
-                                id="question-author"
-                                type="text"
-                                className="input-field"
-                                value={author}
-                                onChange={e => setAuthor(e.target.value)}
-                                placeholder="작성자명을 입력하세요."
-                                required
-                                disabled={context === 'teacher'}
-                            />
-                        </div>
-                        <div className="input-group">
-                            <label htmlFor="question-content">궁금한 점을 남겨주세요.</label>
-                            <textarea
-                                id="question-content"
-                                className="textarea-field"
-                                value={question}
-                                onChange={e => setQuestion(e.target.value)}
-                                placeholder="서비스 이용 중 궁금한 점이나 불편한 점을 자세히 적어주세요."
-                                required
-                            />
-                        </div>
-                        <div className="agreement-group" style={{background: '#f7f9fc', padding: '0.75rem', borderRadius: '8px'}}>
-                            <input type="checkbox" id="secret-post" checked={isSecret} onChange={e => setIsSecret(e.target.checked)} />
-                            <label htmlFor="secret-post">비밀글로 설정하기</label>
-                        </div>
-                        {isSecret && (
-                            <div className="input-group">
-                                <label htmlFor="question-password">비밀번호 (4자리 숫자)</label>
-                                <input
-                                    id="question-password"
-                                    type="password"
-                                    inputMode="numeric"
-                                    maxLength={4}
-                                    className="input-field"
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    placeholder="비밀번호 4자리를 입력하세요."
-                                    required
-                                />
-                            </div>
-                        )}
-                        <div className="action-buttons">
-                            <button type="button" className="button button-secondary" onClick={onClose}>취소</button>
-                            <button type="submit" className="button">등록하기</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        );
-    };
-
-    const handlePasswordConfirm = (passwordInput: string) => {
-        if (postToVerify && postToVerify.password === passwordInput) {
-            setUnlockedPosts(prev => new Set(prev).add(postToVerify.id));
-            setExpandedPostId(postToVerify.id);
-            setPostToVerify(null);
-        } else {
-            addToast('비밀번호가 일치하지 않습니다.', 'error');
-        }
-    };
 
     const togglePost = (post: QnAPost) => {
         if (expandedPostId === post.id) {
             setExpandedPostId(null);
-        } else if (post.isSecret && !unlockedPosts.has(post.id) && context !== 'teacher') {
-            setPostToVerify(post);
         } else {
-            setExpandedPostId(post.id);
+            const canView = !post.isSecret || (post.authorEmail === currentUserEmail);
+            if (canView) {
+                setExpandedPostId(post.id);
+            } else {
+                addToast('비밀글은 작성자만 조회할 수 있습니다.', 'info');
+            }
         }
     };
+    
+    const maskAuthor = (author: string) => {
+        if (!author) return '';
+        if (author.length <= 2) {
+            return author;
+        }
+        return author.substring(0, 2) + '*'.repeat(author.length - 2);
+    };
 
-    const handleConfirmQuestion = (data: Omit<QnAPost, 'id' | 'createdAt'>) => {
+    const handleConfirmQuestion = (data: { title: string; question: string; isSecret: boolean; }) => {
         onAskQuestion(data);
         setIsModalOpen(false);
     };
@@ -180,7 +120,8 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
                                 color: '#0B6623',
                                 background: 'none',
                                 WebkitBackgroundClip: 'initial',
-                                WebkitTextFillColor: 'initial' 
+                                WebkitTextFillColor: 'initial',
+                                alignItems: 'flex-start'
                             }}>
                                 Q&amp;A 게시판
                             </h1>
@@ -195,40 +136,52 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
                 </header>
 
                 {posts.length > 0 ? (
-                    <ul className="board-list">
-                        {posts.map(post => {
-                            const isUnlocked = post.isSecret && (unlockedPosts.has(post.id) || context === 'teacher');
-                            return (
-                                <li key={post.id} className="board-item">
-                                    <div className="board-item-header" onClick={() => togglePost(post)}>
-                                        {post.isSecret ? (
-                                            <h2 className="board-item-title board-item-title-secret">
-                                                🔒 비밀글입니다
-                                            </h2>
-                                        ) : (
-                                            <h2 className="board-item-title">{post.question}</h2>
-                                        )}
-                                        <span className={`qna-status ${post.answer ? 'qna-status-answered' : 'qna-status-pending'}`}>
-                                            {post.answer ? '답변 완료' : '답변 대기'}
-                                        </span>
-                                    </div>
-                                    {expandedPostId === post.id && (
-                                        <div className="board-item-content">
-                                            <p><b>Q.</b> {post.question}</p>
-                                            <small style={{color: '#666'}}>작성자: {isUnlocked || !post.isSecret ? post.author : '비공개'} / 작성일: {new Date(post.createdAt).toLocaleDateString()}</small>
-                                            {post.answer && (
-                                                <div className="qna-answer">
-                                                    <p className="qna-answer-header">A. 관리자 답변</p>
-                                                    <p>{post.answer}</p>
-                                                    <small style={{color: '#666'}}>답변일: {new Date(post.answeredAt!).toLocaleDateString()}</small>
-                                                </div>
-                                            )}
+                    <>
+                        <div className="qna-list-header">
+                            <div className="qna-col-title">제목</div>
+                            <div className="qna-col-author">작성자</div>
+                            <div className="qna-col-date">작성일</div>
+                            <div className="qna-col-status">답변 여부</div>
+                        </div>
+                        <ul className="board-list">
+                            {posts.map(post => {
+                                const isMyPost = post.authorEmail === currentUserEmail;
+                                return (
+                                    <li key={post.id} className="board-item">
+                                        <div 
+                                            className={`qna-list-row ${isMyPost ? 'my-post-highlight' : ''}`} 
+                                            onClick={() => togglePost(post)}
+                                        >
+                                            <div className="qna-col-title post-title">
+                                                {post.isSecret && '🔒 '}
+                                                {post.title}
+                                            </div>
+                                            <div className="qna-col-author">{maskAuthor(post.author)}</div>
+                                            <div className="qna-col-date">{new Date(post.createdAt).toLocaleDateString()}</div>
+                                            <div className="qna-col-status">
+                                                <span className={`qna-status ${post.answer ? 'qna-status-answered' : 'qna-status-pending'}`}>
+                                                    {post.answer ? '답변 완료' : '답변 대기'}
+                                                </span>
+                                            </div>
                                         </div>
-                                    )}
-                                </li>
-                            )
-                        })}
-                    </ul>
+                                        {expandedPostId === post.id && (
+                                            <div className="board-item-content">
+                                                <p><b>Q.</b> {post.question}</p>
+                                                <small style={{color: '#666'}}>작성자: {maskAuthor(post.author)} / 작성일: {new Date(post.createdAt).toLocaleDateString()}</small>
+                                                {post.answer && (
+                                                    <div className="qna-answer">
+                                                        <p className="qna-answer-header">A. 관리자 답변</p>
+                                                        <p>{post.answer}</p>
+                                                        {post.answeredAt && <small style={{color: '#666'}}>답변일: {new Date(post.answeredAt).toLocaleDateString()}</small>}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    </>
                 ) : (
                     <div className="info-card" style={{ textAlign: 'center' }}>
                         <p>등록된 질문이 없습니다. 궁금한 점을 질문해보세요.</p>
@@ -241,7 +194,6 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
                     </button>
                 </div>
                 {isModalOpen && <AskQuestionModal onClose={() => setIsModalOpen(false)} onConfirm={handleConfirmQuestion} />}
-                {postToVerify && <PasswordPromptModal onClose={() => setPostToVerify(null)} onConfirm={handlePasswordConfirm} />}
             </div>
         </>
     );

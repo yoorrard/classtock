@@ -23,6 +23,7 @@ const App: React.FC = () => {
     const [qnaPosts, setQnaPosts] = useState<QnAPost[]>(mockQandAPosts);
     const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
     const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState(false);
+    const [currentTeacherEmail, setCurrentTeacherEmail] = useState<string | null>(null);
     
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -147,11 +148,13 @@ const App: React.FC = () => {
         // For this demo, we'll just log them in immediately after "registering".
         addToast('회원가입이 완료되었습니다. 자동으로 로그인됩니다.', 'success');
         setIsTeacherLoggedIn(true);
+        setCurrentTeacherEmail(email);
         setView('teacher_dashboard');
     };
 
-    const handleTeacherLogin = () => {
+    const handleTeacherLogin = (email: string) => {
         setIsTeacherLoggedIn(true);
+        setCurrentTeacherEmail(email); // In a real app, this would come from the login response
         setView('teacher_dashboard');
     };
     
@@ -295,6 +298,7 @@ const App: React.FC = () => {
         setCurrentStudentId(null);
         setSelectedClassId(null);
         setIsTeacherLoggedIn(false);
+        setCurrentTeacherEmail(null);
         setView('landing'); 
     };
     
@@ -332,10 +336,17 @@ const App: React.FC = () => {
         addToast('공지사항이 삭제되었습니다.', 'success');
     };
 
-    const handleAskQuestion = (postData: Omit<QnAPost, 'id' | 'createdAt'>) => {
+    const handleAskQuestion = (postData: { title: string; question: string; isSecret: boolean; }) => {
+        if (!isTeacherLoggedIn || !currentTeacherEmail) {
+            addToast('질문을 등록하려면 로그인이 필요합니다.', 'error');
+            return;
+        }
+
         const newPost: QnAPost = {
             id: `Q${Date.now()}`,
             createdAt: Date.now(),
+            author: currentTeacherEmail.split('@')[0],
+            authorEmail: currentTeacherEmail,
             ...postData
         };
         setQnaPosts(prev => [newPost, ...prev].sort((a,b) => b.createdAt - a.createdAt));
@@ -439,6 +450,7 @@ const App: React.FC = () => {
                     addToast={addToast} 
                     onNavigate={setView}
                     context={isTeacherLoggedIn ? 'teacher' : 'landing'}
+                    currentUserEmail={currentTeacherEmail}
                 />;
             case 'admin_dashboard':
                 if (!isAdminLoggedIn) { setView('landing'); return null; }

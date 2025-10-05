@@ -30,9 +30,9 @@ const QnAManager: React.FC<QnAManagerProps> = ({ posts, onAnswer, onDelete }) =>
                 {posts.map(post => (
                     <li key={post.id} className="data-list-item">
                         <div className="stock-info">
-                            <span className={post.isSecret ? 'board-item-title-secret' : ''}>
-                                {post.isSecret && '🔒'}
-                                {post.question}
+                            <span className="post-title" style={{whiteSpace: 'normal'}}>
+                                {post.isSecret && '🔒 '}
+                                {post.title}
                             </span>
                             <small>작성자: {post.author} / {new Date(post.createdAt).toLocaleString()}</small>
                         </div>

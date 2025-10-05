@@ -60,8 +60,10 @@ export const mockNotices: Notice[] = [
 export const mockQandAPosts: QnAPost[] = [
     {
         id: 'Q1',
-        author: '이학생',
-        question: '주가는 언제, 어떻게 변경되나요?',
+        author: 'teacher',
+        authorEmail: 'teacher@example.com',
+        title: '주가는 언제, 어떻게 변경되나요?',
+        question: 'ClassStock에서 사용되는 주가 정보는 언제 업데이트되는지 궁금합니다. 실시간으로 반영되나요?',
         answer: 'ClassStock의 주가 데이터는 한국투자증권(KIS) API를 통해 실제 국내 주식 시장 데이터를 받아옵니다.\n\n주가는 매일 한국 시간(KST) 기준 오후 4시 10분에 그 날의 종가로 하루에 한 번 업데이트됩니다.\n\n이를 통해 실제와 같은 환경에서 모의투자를 체험할 수 있습니다. 단, 본 서비스는 교육용 모의투자이며 실제 금전 거래는 이루어지지 않습니다.',
         createdAt: new Date('2025-10-09T10:10:00+09:00').getTime(),
         answeredAt: new Date('2025-10-09T11:00:00+09:00').getTime(),
@@ -69,7 +71,9 @@ export const mockQandAPosts: QnAPost[] = [
     },
     {
         id: 'Q2',
-        author: '김선생',
+        author: 'kimteacher',
+        authorEmail: 'kimteacher@school.com',
+        title: '학생 참여 코드 관련 문의',
         question: '학생이 참여 코드를 입력해도 학급에 들어올 수 없다고 합니다. 어떻게 해야 하나요?',
         answer: '안녕하세요, ClassStock 관리자입니다.\n\n참여 코드는 대소문자를 구분하지 않지만, 숫자 0과 알파벳 O 등 혼동하기 쉬운 문자가 있는지 다시 한번 확인 부탁드립니다.\n\n교사 대시보드 > 학급 관리 > 기본 정보 탭에서 참여 코드를 복사하여 학생에게 정확하게 전달해주시는 것을 권장합니다.\n\n문제가 지속될 경우, Q&A 게시판에 다시 문의 남겨주시면 빠르게 확인하겠습니다.',
         createdAt: new Date('2025-10-10T14:00:00+09:00').getTime(),
@@ -78,11 +82,12 @@ export const mockQandAPosts: QnAPost[] = [
     },
     {
         id: 'Q3',
-        author: '박보호',
+        author: 'parkteacher',
+        authorEmail: 'parkteacher@school.com',
+        title: '포트폴리오 수익률 계산 문의',
         question: '제 포트폴리오 수익률 계산이 이상한 것 같아요. 확인 부탁드립니다.',
         createdAt: new Date('2025-10-11T17:00:00+09:00').getTime(),
         isSecret: true,
-        password: '1234',
     },
 ].sort((a,b) => b.createdAt - a.createdAt);
 

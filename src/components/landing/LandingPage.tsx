@@ -22,7 +22,8 @@ interface LandingPageProps {
     notices: Notice[];
     onNavigate: (view: View) => void;
     onStudentJoin: (code: string, name: string) => void;
-    onTeacherLogin: () => void;
+    // FIX: Update onTeacherLogin to accept an email string to match the handler function.
+    onTeacherLogin: (email: string) => void;
     onTeacherRegister: (email: string, password: string) => void;
     onAdminLogin: (password: string) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;

@@ -59,11 +59,12 @@ export interface Notice {
 
 export interface QnAPost {
   id: string;
-  author: string;
+  author: string; // User ID (e.g., from email)
+  authorEmail: string; // Full email for identification
+  title: string;
   question: string;
   answer?: string;
   createdAt: number;
   answeredAt?: number;
   isSecret: boolean;
-  password?: string;
 }

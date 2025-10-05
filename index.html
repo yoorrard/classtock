@@ -953,17 +953,23 @@
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
         
         /* Notice & QnA Board Styles */
-        .board-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--border-color); }
-        .board-item { border-bottom: 1px solid var(--border-color); cursor: pointer; }
-        .board-item-header { padding: 1.25rem 1rem; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; }
+        .board-list { list-style: none; padding: 0; margin: 0; }
+        .board-item { border-bottom: 1px solid var(--border-color); }
+        .board-item-header { padding: 1.25rem 1rem; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s ease; cursor: pointer; gap: 1rem; }
         .board-item:hover .board-item-header { background-color: var(--light-bg); }
+        .my-post-highlight { background-color: #e8f5e9 !important; }
+
+        .post-main-info { display: flex; flex-direction: column; gap: 0.25rem; text-align: left; flex-grow: 1; overflow: hidden; }
+        .post-title { font-weight: 700; color: var(--text-color); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .post-meta { font-size: 0.85rem; color: #666; }
+        
         .board-item-title { font-weight: 700; color: var(--text-color); margin: 0; font-size: 1rem; }
-        .board-item-title-secret { display: flex; align-items: center; gap: 0.5rem; color: var(--subtle-text-color); }
+        .board-item-title-secret { display: flex; align-items: center; gap: 0.5rem; }
         .board-item-meta { font-size: 0.85rem; color: #666; flex-shrink: 0; margin-left: 1rem; }
         .board-item-content { padding: 0 1rem 1.5rem 1rem; color: var(--subtle-text-color); line-height: 1.7; white-space: pre-wrap; border-top: 1px dashed #eee; text-align: left; }
         .qna-answer { margin-top: 1.5rem; padding: 1rem; background-color: var(--light-bg); border-radius: 8px; border-top: 3px solid var(--primary-color); }
         .qna-answer-header { font-weight: 700; color: var(--primary-color); margin-bottom: 0.5rem; }
-        .qna-status { padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: #fff; }
+        .qna-status { padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: #fff; flex-shrink: 0; }
         .qna-status-answered { background-image: var(--teacher-gradient); }
         .qna-status-pending { background-image: linear-gradient(135deg, #888, #666); }
         
@@ -973,6 +979,43 @@
         .file-input-label { display: inline-block; padding: 0.5rem 1rem; background-color: var(--light-bg); color: var(--subtle-text-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
         .file-input-label:hover { background-color: #dde2e6; }
         .attached-file-info { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.9rem; }
+
+        /* New QnA Board List Styles */
+        .qna-list-header {
+            display: flex;
+            align-items: baseline;
+            padding: 0.75rem 1rem;
+            background-color: var(--light-bg);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--subtle-text-color);
+            gap: 1rem;
+        }
+        .qna-list-row {
+            padding: 1.25rem 1rem;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+            gap: 1rem;
+        }
+        .board-item:hover .qna-list-row { background-color: var(--light-bg); }
+
+        .qna-col-title { flex: 1; text-align: left; min-width: 0; }
+        .qna-col-author { width: 120px; text-align: left; flex-shrink: 0; }
+        .qna-col-date { width: 120px; text-align: left; flex-shrink: 0; }
+        .qna-col-status { width: 90px; text-align: left; flex-shrink: 0; }
+
+        .qna-list-row .post-title {
+            font-weight: 700;
+            color: var(--text-color);
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         /* Hide number input spinners globally, except in modals */
         /* This rule is to remove unwanted spinners appearing in the layout, e.g., near tabs */
@@ -1166,6 +1209,8 @@
                 font-size: 0.9rem;
                 padding: 0.5rem 0.25rem;
             }
+            .qna-col-author, .qna-col-date { display: none; }
+            .qna-list-header .qna-col-author, .qna-list-header .qna-col-date { display: none; }
         }
         
         @media (min-width: 768px) {
