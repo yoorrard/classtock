@@ -5,9 +5,10 @@ interface LandingHeaderProps {
     onGoHome: () => void;
     onNavigate: (view: View) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
+    context?: 'landing' | 'teacher';
 }
 
-const LandingHeader: React.FC<LandingHeaderProps> = ({ onGoHome, onNavigate, addToast }) => {
+const LandingHeader: React.FC<LandingHeaderProps> = ({ onGoHome, onNavigate, addToast, context = 'landing' }) => {
     const [communityMenuOpen, setCommunityMenuOpen] = useState(false);
     const [appsMenuOpen, setAppsMenuOpen] = useState(false);
     
@@ -51,7 +52,7 @@ const LandingHeader: React.FC<LandingHeaderProps> = ({ onGoHome, onNavigate, add
                 className="logo-container" 
                 onClick={onGoHome} 
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}
-                aria-label="홈으로 이동"
+                aria-label={context === 'teacher' ? "대시보드로 이동" : "홈으로 이동"}
             >
                 <img 
                     src="assets/logo.png" 
@@ -64,7 +65,7 @@ const LandingHeader: React.FC<LandingHeaderProps> = ({ onGoHome, onNavigate, add
             </button>
             <nav className="main-nav">
                 <div className="nav-item-container">
-                    <button className="nav-button" onClick={onGoHome}>홈</button>
+                    <button className="nav-button" onClick={onGoHome}>{context === 'teacher' ? '대시보드' : '홈'}</button>
                 </div>
                 <div className="nav-item-container">
                     <button className="nav-button" onClick={() => handleToastClick('준비 중입니다.')}>사용법</button>

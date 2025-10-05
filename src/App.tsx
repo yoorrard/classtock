@@ -22,6 +22,7 @@ const App: React.FC = () => {
     const [notices, setNotices] = useState<Notice[]>(mockNotices);
     const [qnaPosts, setQnaPosts] = useState<QnAPost[]>(mockQandAPosts);
     const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+    const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState(false);
     
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -145,6 +146,12 @@ const App: React.FC = () => {
         // This is a placeholder for actual registration logic.
         // For this demo, we'll just log them in immediately after "registering".
         addToast('회원가입이 완료되었습니다. 자동으로 로그인됩니다.', 'success');
+        setIsTeacherLoggedIn(true);
+        setView('teacher_dashboard');
+    };
+
+    const handleTeacherLogin = () => {
+        setIsTeacherLoggedIn(true);
         setView('teacher_dashboard');
     };
     
@@ -287,6 +294,7 @@ const App: React.FC = () => {
     const handleLogout = () => {
         setCurrentStudentId(null);
         setSelectedClassId(null);
+        setIsTeacherLoggedIn(false);
         setView('landing'); 
     };
     
@@ -351,6 +359,9 @@ const App: React.FC = () => {
 
     // --- RENDER LOGIC ---
     const renderView = () => {
+        const teacherContextBack = () => setView('teacher_dashboard');
+        const landingContextBack = () => setView('landing');
+
         switch (view) {
             case 'teacher_dashboard':
                 return <TeacherDashboard 
@@ -359,6 +370,8 @@ const App: React.FC = () => {
                     onCreateClass={handleCreateClass}
                     onSelectClass={handleSelectClass}
                     onDeleteClass={handleDeleteClass}
+                    onNavigate={setView}
+                    addToast={addToast}
                 />;
             case 'class_detail':
                  if (!selectedClass) { setView('teacher_dashboard'); return null; }
@@ -413,17 +426,19 @@ const App: React.FC = () => {
             case 'notice_board':
                 return <NoticeBoard 
                     notices={notices} 
-                    onBack={() => setView('landing')} 
+                    onBack={isTeacherLoggedIn ? teacherContextBack : landingContextBack} 
                     onNavigate={setView}
                     addToast={addToast}
+                    context={isTeacherLoggedIn ? 'teacher' : 'landing'}
                 />;
             case 'qna_board':
                 return <QnABoard 
                     posts={qnaPosts} 
                     onAskQuestion={handleAskQuestion} 
-                    onBack={() => setView('landing')} 
+                    onBack={isTeacherLoggedIn ? teacherContextBack : landingContextBack} 
                     addToast={addToast} 
                     onNavigate={setView}
+                    context={isTeacherLoggedIn ? 'teacher' : 'landing'}
                 />;
             case 'admin_dashboard':
                 if (!isAdminLoggedIn) { setView('landing'); return null; }
@@ -441,7 +456,7 @@ const App: React.FC = () => {
                 notices={notices}
                 onNavigate={setView}
                 onStudentJoin={handleStudentJoin}
-                onTeacherLogin={() => setView('teacher_dashboard')}
+                onTeacherLogin={handleTeacherLogin}
                 onTeacherRegister={handleTeacherRegister}
                 onAdminLogin={handleAdminLogin}
                 addToast={addToast}

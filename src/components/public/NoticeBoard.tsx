@@ -7,9 +7,10 @@ interface NoticeBoardProps {
     onBack: () => void;
     onNavigate: (view: View) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
+    context?: 'landing' | 'teacher';
 }
 
-const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices, onBack, onNavigate, addToast }) => {
+const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices, onBack, onNavigate, addToast, context = 'landing' }) => {
     const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
 
     const toggleNotice = (id: string) => {
@@ -18,7 +19,7 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices, onBack, onNavigate, 
 
     return (
         <>
-            <LandingHeader onGoHome={onBack} onNavigate={onNavigate} addToast={addToast} />
+            <LandingHeader context={context} onGoHome={onBack} onNavigate={onNavigate} addToast={addToast} />
             <div className="container">
                 <header className="header" style={{ marginBottom: '2rem', textAlign: 'left' }}>
                     <h1 style={{ 
@@ -77,7 +78,7 @@ const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices, onBack, onNavigate, 
                 
                 <div className="action-buttons" style={{ marginTop: '2rem' }}>
                     <button type="button" className="button button-secondary" style={{ width: '100%' }} onClick={onBack}>
-                        메인으로 돌아가기
+                        {context === 'teacher' ? '대시보드로 돌아가기' : '메인으로 돌아가기'}
                     </button>
                 </div>
             </div>

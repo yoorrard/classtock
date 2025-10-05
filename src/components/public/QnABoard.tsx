@@ -8,6 +8,7 @@ interface QnABoardProps {
     onBack: () => void;
     addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
     onNavigate: (view: View) => void;
+    context?: 'landing' | 'teacher';
 }
 
 const PasswordPromptModal: React.FC<{
@@ -134,7 +135,7 @@ const AskQuestionModal: React.FC<{
     );
 };
 
-const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addToast, onNavigate }) => {
+const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addToast, onNavigate, context = 'landing' }) => {
     const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [postToVerify, setPostToVerify] = useState<QnAPost | null>(null);
@@ -167,7 +168,7 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
 
     return (
         <>
-            <LandingHeader onGoHome={onBack} onNavigate={onNavigate} addToast={addToast} />
+            <LandingHeader context={context} onGoHome={onBack} onNavigate={onNavigate} addToast={addToast} />
             <div className="container">
                 <header className="header" style={{ marginBottom: '2rem', textAlign: 'left' }}>
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem'}}>
@@ -231,7 +232,7 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
                 
                 <div className="action-buttons" style={{ marginTop: '2rem' }}>
                     <button type="button" className="button button-secondary" style={{ width: '100%' }} onClick={onBack}>
-                        메인으로 돌아가기
+                        {context === 'teacher' ? '대시보드로 돌아가기' : '메인으로 돌아가기'}
                     </button>
                 </div>
                 {isModalOpen && <AskQuestionModal onClose={() => setIsModalOpen(false)} onConfirm={handleConfirmQuestion} />}
