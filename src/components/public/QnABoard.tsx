@@ -53,93 +53,94 @@ const PasswordPromptModal: React.FC<{
     );
 };
 
-const AskQuestionModal: React.FC<{
-    onClose: () => void;
-    onConfirm: (data: Omit<QnAPost, 'id' | 'createdAt' | 'answeredAt' | 'answer'>) => void;
-}> = ({ onClose, onConfirm }) => {
-    const [question, setQuestion] = useState('');
-    const [author, setAuthor] = useState('');
-    const [isSecret, setIsSecret] = useState(false);
-    const [password, setPassword] = useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (question.trim() && author.trim()) {
-            onConfirm({
-                question: question.trim(),
-                author: author.trim(),
-                isSecret,
-                password: isSecret ? password : undefined,
-            });
-        }
-    };
-
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <header className="modal-header">
-                    <h2>질문하기</h2>
-                    <button onClick={onClose} className="close-button" aria-label="닫기">&times;</button>
-                </header>
-                <form onSubmit={handleSubmit}>
-                    <div className="input-group">
-                        <label htmlFor="question-author">작성자</label>
-                        <input
-                            id="question-author"
-                            type="text"
-                            className="input-field"
-                            value={author}
-                            onChange={e => setAuthor(e.target.value)}
-                            placeholder="작성자명을 입력하세요."
-                            required
-                        />
-                    </div>
-                    <div className="input-group">
-                        <label htmlFor="question-content">궁금한 점을 남겨주세요.</label>
-                        <textarea
-                            id="question-content"
-                            className="textarea-field"
-                            value={question}
-                            onChange={e => setQuestion(e.target.value)}
-                            placeholder="서비스 이용 중 궁금한 점이나 불편한 점을 자세히 적어주세요."
-                            required
-                        />
-                    </div>
-                    <div className="agreement-group" style={{background: '#f7f9fc', padding: '0.75rem', borderRadius: '8px'}}>
-                        <input type="checkbox" id="secret-post" checked={isSecret} onChange={e => setIsSecret(e.target.checked)} />
-                        <label htmlFor="secret-post">비밀글로 설정하기</label>
-                    </div>
-                    {isSecret && (
-                        <div className="input-group">
-                            <label htmlFor="question-password">비밀번호 (4자리 숫자)</label>
-                            <input
-                                id="question-password"
-                                type="password"
-                                inputMode="numeric"
-                                maxLength={4}
-                                className="input-field"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                placeholder="비밀번호 4자리를 입력하세요."
-                                required
-                            />
-                        </div>
-                    )}
-                    <div className="action-buttons">
-                        <button type="button" className="button button-secondary" onClick={onClose}>취소</button>
-                        <button type="submit" className="button">등록하기</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
 const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addToast, onNavigate, context = 'landing' }) => {
     const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [postToVerify, setPostToVerify] = useState<QnAPost | null>(null);
     const [unlockedPosts, setUnlockedPosts] = useState<Set<string>>(new Set());
+
+    const AskQuestionModal: React.FC<{
+        onClose: () => void;
+        onConfirm: (data: Omit<QnAPost, 'id' | 'createdAt' | 'answeredAt' | 'answer'>) => void;
+    }> = ({ onClose, onConfirm }) => {
+        const [question, setQuestion] = useState('');
+        const [author, setAuthor] = useState(context === 'teacher' ? '선생님' : '');
+        const [isSecret, setIsSecret] = useState(false);
+        const [password, setPassword] = useState('');
+
+        const handleSubmit = (e: React.FormEvent) => {
+            e.preventDefault();
+            if (question.trim() && author.trim()) {
+                onConfirm({
+                    question: question.trim(),
+                    author: author.trim(),
+                    isSecret,
+                    password: isSecret ? password : undefined,
+                });
+            }
+        };
+
+        return (
+            <div className="modal-overlay" onClick={onClose}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                    <header className="modal-header">
+                        <h2>질문하기</h2>
+                        <button onClick={onClose} className="close-button" aria-label="닫기">&times;</button>
+                    </header>
+                    <form onSubmit={handleSubmit}>
+                        <div className="input-group">
+                            <label htmlFor="question-author">작성자</label>
+                            <input
+                                id="question-author"
+                                type="text"
+                                className="input-field"
+                                value={author}
+                                onChange={e => setAuthor(e.target.value)}
+                                placeholder="작성자명을 입력하세요."
+                                required
+                                disabled={context === 'teacher'}
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label htmlFor="question-content">궁금한 점을 남겨주세요.</label>
+                            <textarea
+                                id="question-content"
+                                className="textarea-field"
+                                value={question}
+                                onChange={e => setQuestion(e.target.value)}
+                                placeholder="서비스 이용 중 궁금한 점이나 불편한 점을 자세히 적어주세요."
+                                required
+                            />
+                        </div>
+                        <div className="agreement-group" style={{background: '#f7f9fc', padding: '0.75rem', borderRadius: '8px'}}>
+                            <input type="checkbox" id="secret-post" checked={isSecret} onChange={e => setIsSecret(e.target.checked)} />
+                            <label htmlFor="secret-post">비밀글로 설정하기</label>
+                        </div>
+                        {isSecret && (
+                            <div className="input-group">
+                                <label htmlFor="question-password">비밀번호 (4자리 숫자)</label>
+                                <input
+                                    id="question-password"
+                                    type="password"
+                                    inputMode="numeric"
+                                    maxLength={4}
+                                    className="input-field"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    placeholder="비밀번호 4자리를 입력하세요."
+                                    required
+                                />
+                            </div>
+                        )}
+                        <div className="action-buttons">
+                            <button type="button" className="button button-secondary" onClick={onClose}>취소</button>
+                            <button type="submit" className="button">등록하기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        );
+    };
 
     const handlePasswordConfirm = (passwordInput: string) => {
         if (postToVerify && postToVerify.password === passwordInput) {
@@ -154,7 +155,7 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
     const togglePost = (post: QnAPost) => {
         if (expandedPostId === post.id) {
             setExpandedPostId(null);
-        } else if (post.isSecret && !unlockedPosts.has(post.id)) {
+        } else if (post.isSecret && !unlockedPosts.has(post.id) && context !== 'teacher') {
             setPostToVerify(post);
         } else {
             setExpandedPostId(post.id);
@@ -183,16 +184,20 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
                             }}>
                                 Q&amp;A 게시판
                             </h1>
-                            <p style={{ margin: '0.25rem 0 0 0' }}>무엇이든 물어보세요.</p>
+                            <p style={{ margin: '0.25rem 0 0 0' }}>
+                                {context === 'teacher' ? '서비스 이용 중 궁금한 점을 질문하세요.' : '자주 묻는 질문과 답변을 확인하세요.'}
+                            </p>
                         </div>
-                        <button className="button" style={{width: 'auto', padding: '0.5rem 1rem'}} onClick={() => setIsModalOpen(true)}>질문하기</button>
+                        {context === 'teacher' && (
+                            <button className="button" style={{width: 'auto', padding: '0.5rem 1rem'}} onClick={() => setIsModalOpen(true)}>질문하기</button>
+                        )}
                     </div>
                 </header>
 
                 {posts.length > 0 ? (
                     <ul className="board-list">
                         {posts.map(post => {
-                            const isUnlocked = post.isSecret && unlockedPosts.has(post.id);
+                            const isUnlocked = post.isSecret && (unlockedPosts.has(post.id) || context === 'teacher');
                             return (
                                 <li key={post.id} className="board-item">
                                     <div className="board-item-header" onClick={() => togglePost(post)}>
