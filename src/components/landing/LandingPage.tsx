@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Notice, ToastMessage } from '../../types';
+import { View, Notice, ToastMessage, PopupNotice } from '../../types';
 import { termsOfService, privacyPolicy } from '../../data';
 import PolicyModal from '../shared/PolicyModal';
 import StudentLoginModal from './StudentLoginModal';
@@ -8,6 +8,7 @@ import TeacherRegisterModal from './TeacherRegisterModal';
 import AdminLoginModal from '../admin/AdminLoginModal';
 import PasswordResetModal from './PasswordResetModal';
 import LandingHeader from './LandingHeader';
+import PopupNoticeModal from './PopupNoticeModal';
 
 // Use direct paths for images instead of importing them
 const photos = [
@@ -20,6 +21,7 @@ const photos = [
 
 interface LandingPageProps {
     notices: Notice[];
+    popupNotices: PopupNotice[];
     onNavigate: (view: View) => void;
     onStudentJoin: (code: string, name: string) => void;
     // FIX: Update onTeacherLogin to accept an email string to match the handler function.
@@ -28,14 +30,40 @@ interface LandingPageProps {
     onAdminLogin: (password: string) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
 }
-const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStudentJoin, onTeacherLogin, onTeacherRegister, onAdminLogin, addToast }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavigate, onStudentJoin, onTeacherLogin, onTeacherRegister, onAdminLogin, addToast }) => {
     const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
     const [activeModal, setActiveModal] = useState<'student' | 'teacherLogin' | 'teacherRegister' | 'admin' | 'passwordReset' | null>(null);
+    const [activePopupNotice, setActivePopupNotice] = useState<PopupNotice | null>(null);
     const latestNotices = notices.slice(0, 3);
     const [currentPhoto, setCurrentPhoto] = useState(0);
 
     const totalPhotos = photos.length;
+
+    useEffect(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to start of day
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        const activeNotice = popupNotices.find(notice => {
+            const startDate = new Date(notice.startDate);
+            const endDate = new Date(notice.endDate);
+            endDate.setHours(23, 59, 59, 999); // Normalize to end of day
+
+            const isWithinDateRange = today >= startDate && today <= endDate;
+            if (!isWithinDateRange) return false;
+
+            const dismissedDate = localStorage.getItem(`classstock_popup_dismissed_${notice.id}`);
+            const isDismissedToday = dismissedDate === todayStr;
+
+            return !isDismissedToday;
+        });
+        
+        if (activeNotice) {
+            setActivePopupNotice(activeNotice);
+        }
+    }, [popupNotices]);
 
     const handleNext = () => {
         setCurrentPhoto((prev) => (prev + 1) % totalPhotos);
@@ -277,6 +305,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, onNavigate, onStuden
                     onRequestReset={handlePasswordResetRequest}
                 />}
                 {activeModal === 'admin' && <AdminLoginModal onClose={() => setActiveModal(null)} onLogin={(password) => { onAdminLogin(password); setActiveModal(null); }} />}
+                {activePopupNotice && <PopupNoticeModal notice={activePopupNotice} onClose={() => setActivePopupNotice(null)} />}
             </div>
         </>
     );

@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { Notice, QnAPost } from '../../types';
+import { Notice, QnAPost, PopupNotice } from '../../types';
 import NoticeManager from './NoticeManager';
 import QnAManager from './QnAManager';
+import PopupNoticeManager from './PopupNoticeManager';
 
 interface AdminDashboardProps {
     notices: Notice[];
     qnaPosts: QnAPost[];
+    popupNotices: PopupNotice[];
     onSaveNotice: (notice: Notice) => void;
     onDeleteNotice: (noticeId: string) => void;
     onAnswerQuestion: (qnaId: string, answer: string) => void;
     onDeleteQnAPost: (qnaId: string) => void;
+    onSavePopupNotice: (notice: PopupNotice) => void;
+    onDeletePopupNotice: (noticeId: string) => void;
     onLogout: () => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ notices, qnaPosts, onSaveNotice, onDeleteNotice, onAnswerQuestion, onDeleteQnAPost, onLogout }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ notices, qnaPosts, popupNotices, onSaveNotice, onDeleteNotice, onAnswerQuestion, onDeleteQnAPost, onSavePopupNotice, onDeletePopupNotice, onLogout }) => {
     const [activeTab, setActiveTab] = useState('notices');
 
     return (
@@ -34,6 +38,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notices, qnaPosts, onSa
                 <button className={`tab-button ${activeTab === 'qna' ? 'active' : ''}`} onClick={() => setActiveTab('qna')}>
                     Q&A 관리 ({qnaPosts.length})
                 </button>
+                <button className={`tab-button ${activeTab === 'popup_notices' ? 'active' : ''}`} onClick={() => setActiveTab('popup_notices')}>
+                    팝업 공지 관리 ({popupNotices.length})
+                </button>
             </div>
             <div className="tab-content">
                 {activeTab === 'notices' && (
@@ -48,6 +55,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ notices, qnaPosts, onSa
                         posts={qnaPosts}
                         onAnswer={onAnswerQuestion}
                         onDelete={onDeleteQnAPost}
+                    />
+                )}
+                {activeTab === 'popup_notices' && (
+                    <PopupNoticeManager
+                        notices={popupNotices}
+                        onSave={onSavePopupNotice}
+                        onDelete={onDeletePopupNotice}
                     />
                 )}
             </div>

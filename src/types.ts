@@ -57,6 +57,19 @@ export interface Notice {
   }
 }
 
+export interface PopupNotice {
+  id: string;
+  title: string;
+  content: string;
+  startDate: string;
+  endDate: string;
+  attachment?: {
+      name: string;
+      url: string; // Data URL
+      type: string;
+  }
+}
+
 export interface QnAPost {
   id: string;
   author: string; // User ID (e.g., from email)

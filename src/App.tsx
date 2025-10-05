@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost } from './types';
-import { mockStockData, mockNotices, mockQandAPosts } from './data';
+import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost, PopupNotice } from './types';
+import { mockStockData, mockNotices, mockQandAPosts, mockPopupNotices } from './data';
 
 import LandingPage from './components/landing/LandingPage';
 import TeacherDashboard from './components/teacher/TeacherDashboard';
@@ -21,6 +21,7 @@ const App: React.FC = () => {
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
     const [notices, setNotices] = useState<Notice[]>(mockNotices);
     const [qnaPosts, setQnaPosts] = useState<QnAPost[]>(mockQandAPosts);
+    const [popupNotices, setPopupNotices] = useState<PopupNotice[]>(mockPopupNotices);
     const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
     const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState(false);
     const [currentTeacherEmail, setCurrentTeacherEmail] = useState<string | null>(null);
@@ -362,6 +363,25 @@ const App: React.FC = () => {
         setQnaPosts(prev => prev.filter(p => p.id !== qnaId));
         addToast('Q&A 게시글이 삭제되었습니다.', 'success');
     };
+
+    const handleSavePopupNotice = (notice: PopupNotice) => {
+        setPopupNotices(prev => {
+            const index = prev.findIndex(n => n.id === notice.id);
+            if (index > -1) {
+                const updated = [...prev];
+                updated[index] = notice;
+                return updated;
+            } else {
+                return [notice, ...prev];
+            }
+        });
+        addToast('팝업 공지가 저장되었습니다.', 'success');
+    };
+
+    const handleDeletePopupNotice = (noticeId: string) => {
+        setPopupNotices(prev => prev.filter(n => n.id !== noticeId));
+        addToast('팝업 공지가 삭제되었습니다.', 'success');
+    };
     
     // --- DERIVED STATE ---
     const selectedClass = classes.find(c => c.id === selectedClassId);
@@ -457,15 +477,19 @@ const App: React.FC = () => {
                 return <AdminDashboard 
                     notices={notices}
                     qnaPosts={qnaPosts}
+                    popupNotices={popupNotices}
                     onSaveNotice={handleSaveNotice}
                     onDeleteNotice={handleDeleteNotice}
                     onAnswerQuestion={handleAnswerQuestion}
                     onDeleteQnAPost={handleDeleteQnAPost}
+                    onSavePopupNotice={handleSavePopupNotice}
+                    onDeletePopupNotice={handleDeletePopupNotice}
                     onLogout={handleAdminLogout}
                 />;
             case 'landing':
             default: return <LandingPage
                 notices={notices}
+                popupNotices={popupNotices}
                 onNavigate={setView}
                 onStudentJoin={handleStudentJoin}
                 onTeacherLogin={handleTeacherLogin}

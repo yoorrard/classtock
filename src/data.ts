@@ -1,4 +1,4 @@
-import { Stock, Notice, QnAPost } from './types';
+import { Stock, Notice, QnAPost, PopupNotice } from './types';
 
 export const mockStockData: Stock[] = [
     // IT / 전기전자
@@ -90,6 +90,16 @@ export const mockQandAPosts: QnAPost[] = [
         isSecret: true,
     },
 ].sort((a,b) => b.createdAt - a.createdAt);
+
+export const mockPopupNotices: PopupNotice[] = [
+    {
+        id: 'PN1',
+        title: '🎉 ClassStock 정식 서비스 오픈! 🎉',
+        content: '안녕하세요, ClassStock입니다!\n\n학생들의 금융 교육을 위한 최고의 파트너, ClassStock이 드디어 정식으로 서비스를 시작합니다.\n\n선생님과 학생 모두에게 즐겁고 유익한 모의투자 경험을 제공하기 위해 최선을 다하겠습니다.\n\n지금 바로 학급을 만들어보세요!',
+        startDate: '2025-10-08',
+        endDate: '2025-10-31',
+    }
+];
 
 
 export const termsOfService = `ClassStock 이용약관
