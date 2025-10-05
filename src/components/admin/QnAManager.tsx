@@ -41,7 +41,7 @@ const QnAManager: React.FC<QnAManagerProps> = ({ posts, onAnswer, onDelete }) =>
                                 {post.answer ? '답변 완료' : '답변 대기'}
                             </span>
                              <button 
-                                onClick={() => handleDeleteClick(post.id)} 
+                                onClick={() => handleDeleteClick(post.id)}
                                 className="button button-danger" 
                                 style={{width:'auto', padding:'0.3rem 0.8rem', fontSize:'0.8rem'}}
                             >

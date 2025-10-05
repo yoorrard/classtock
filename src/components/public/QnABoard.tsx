@@ -166,8 +166,10 @@ const QnABoard: React.FC<QnABoardProps> = ({ posts, onAskQuestion, onBack, addTo
                                         </div>
                                         {expandedPostId === post.id && (
                                             <div className="board-item-content">
-                                                <p><b>Q.</b> {post.question}</p>
-                                                <small style={{color: '#666'}}>작성자: {maskAuthor(post.author)} / 작성일: {new Date(post.createdAt).toLocaleDateString()}</small>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <p style={{ flexGrow: 1, margin: 0 }}><b>Q.</b> {post.question}</p>
+                                                </div>
+                                                <small style={{color: '#666', display: 'block', marginTop: '0.5rem'}}>작성자: {maskAuthor(post.author)} / 작성일: {new Date(post.createdAt).toLocaleDateString()}</small>
                                                 {post.answer && (
                                                     <div className="qna-answer">
                                                         <p className="qna-answer-header">A. 관리자 답변</p>
