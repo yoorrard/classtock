@@ -5,6 +5,8 @@ type ExtendedStudentInfo = StudentInfo & {
     totalAssets: number;
     totalProfit: number;
     totalProfitRate: number;
+    investmentProfit: number;
+    investmentProfitRate: number;
 };
 
 interface RankingBoardProps {
@@ -20,7 +22,7 @@ const RankingBoard: React.FC<RankingBoardProps> = ({ students, sortBy }) => {
         <div className="info-section">
             {sortedStudents.length > 0 ? (
                 <ul className="data-list">{sortedStudents.map((student, index) => {
-                    const profitClass = student.totalProfit > 0 ? 'positive' : student.totalProfit < 0 ? 'negative' : 'neutral';
+                    const profitClass = student.investmentProfit > 0 ? 'positive' : student.investmentProfit < 0 ? 'negative' : 'neutral';
                     return (
                         <li key={student.id} className="data-list-item ranking-list-item">
                             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -32,10 +34,10 @@ const RankingBoard: React.FC<RankingBoardProps> = ({ students, sortBy }) => {
                             ) : (
                                 <div className={`price-info ${profitClass}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.1rem', fontSize: '1rem', fontWeight: 700 }}>
                                     <span>
-                                        {student.totalProfit > 0 ? '▲ ' : student.totalProfit < 0 ? '▼ ' : ''}{Math.abs(student.totalProfit).toLocaleString()}원
+                                        {student.investmentProfit > 0 ? '▲ ' : student.investmentProfit < 0 ? '▼ ' : ''}{Math.abs(student.investmentProfit).toLocaleString()}원
                                     </span>
                                     <small className="profit" style={{ fontWeight: 700 }}>
-                                        ({student.totalProfitRate.toFixed(2)}%)
+                                        ({student.investmentProfitRate.toFixed(2)}%)
                                     </small>
                                 </div>
                             )}

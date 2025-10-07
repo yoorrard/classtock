@@ -30,7 +30,7 @@ const TradeModal: React.FC<TradeModalProps> = ({ tradeInfo, student, classInfo, 
 
     const numericQuantity = quantity === '' ? 0 : parseInt(quantity, 10);
     const total = stock.price * numericQuantity;
-    const commission = total * (commissionRatePercent / 100);
+    const commission = Math.trunc(total * (commissionRatePercent / 100));
     const finalAmount = type === 'buy' ? total + commission : total - commission;
     const isConfirmDisabled = numericQuantity <= 0 || numericQuantity > maxQuantity;
 

@@ -5,6 +5,8 @@ type ExtendedStudentInfo = StudentInfo & {
     totalAssets: number;
     totalProfit: number;
     totalProfitRate: number;
+    investmentProfit: number;
+    investmentProfitRate: number;
 };
 
 interface StudentPortfolioModalProps {
@@ -21,7 +23,7 @@ const StudentPortfolioModal: React.FC<StudentPortfolioModalProps> = ({ student, 
         if (!stock) return null;
         const currentValue = stock.price * item.quantity;
         const costBasis = item.averagePrice * item.quantity;
-        const profit = currentValue - costBasis;
+        const profit = Math.trunc(currentValue - costBasis);
         const profitRate = costBasis > 0 ? (profit / costBasis) * 100 : 0;
         return { ...item, stock, currentValue, costBasis, profit, profitRate };
     }).filter(Boolean), [student.portfolio, stocks]);

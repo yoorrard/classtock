@@ -10,7 +10,13 @@ interface StudentDashboardProps {
     classInfo: ClassInfo;
     stocks: Stock[];
     transactions: Transaction[];
-    classRanking: (StudentInfo & { totalAssets: number; totalProfit: number; totalProfitRate: number; })[];
+    classRanking: (StudentInfo & { 
+        totalAssets: number; 
+        totalProfit: number; 
+        totalProfitRate: number;
+        investmentProfit: number;
+        investmentProfitRate: number;
+    })[];
     onTrade: (studentId: string, stockCode: string, quantity: number, type: TradeType) => void;
     onLogout: () => void;
     isTradingActive: boolean;
@@ -29,8 +35,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
     const stockAssets = totalAssets - cash;
 
     const totalProfitLoss = useMemo(() => {
-        // Calculate total profit/loss based on seed money (including bonuses)
-        return totalAssets - classInfo.seedMoney;
+        return Math.trunc(totalAssets - classInfo.seedMoney);
     }, [totalAssets, classInfo.seedMoney]);
 
     const profitClass = totalProfitLoss > 0 ? 'positive' : totalProfitLoss < 0 ? 'negative' : '';
@@ -48,7 +53,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
             
             const currentValue = stock.price * item.quantity;
             const costBasis = item.averagePrice * item.quantity;
-            const profit = currentValue - costBasis;
+            const profit = Math.trunc(currentValue - costBasis);
             const profitRate = costBasis > 0 ? (profit / costBasis) * 100 : 0;
 
             return { 
@@ -65,7 +70,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ student, classInfo,
     const sortedStudentsForRanking = useMemo(() => {
         return [...classRanking].sort((a, b) => {
             if (rankingSortBy === 'profitRate') {
-                return b.totalProfitRate - a.totalProfitRate;
+                return b.investmentProfitRate - a.investmentProfitRate;
             }
             return b.totalAssets - a.totalAssets; // default to totalAssets
         });

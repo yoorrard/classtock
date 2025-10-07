@@ -10,6 +10,8 @@ type ExtendedStudentInfo = StudentInfo & {
     totalAssets: number;
     totalProfit: number;
     totalProfitRate: number;
+    investmentProfit: number;
+    investmentProfitRate: number;
 };
 
 interface ClassDetailViewProps {
@@ -90,7 +92,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
     const sortedStudentsForRanking = useMemo(() => {
         return [...students].sort((a, b) => {
             if (rankingSortBy === 'profitRate') {
-                return b.totalProfitRate - a.totalProfitRate;
+                return b.investmentProfitRate - a.investmentProfitRate;
             }
             return b.totalAssets - a.totalAssets; // default to totalAssets
         });
@@ -145,19 +147,19 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({ onBack, classInfo, st
                         {students.length > 0 ? (
                             <div className="portfolio-grid class-list">
                                 {students.map(student => {
-                                    const profitClass = student.totalProfit > 0 ? 'positive' : student.totalProfit < 0 ? 'negative' : 'neutral';
+                                    const profitClass = student.investmentProfit > 0 ? 'positive' : student.investmentProfit < 0 ? 'negative' : 'neutral';
                                     return (
                                         <div key={student.id} className="class-card" style={{cursor: 'pointer'}} onClick={() => setViewingStudent(student)}>
                                             <h3 style={{marginBottom: '1rem'}}>{student.nickname}</h3>
                                             <p><strong>총 자산:</strong> {student.totalAssets.toLocaleString()}원</p>
                                             <p className={profitClass}>
                                                 <strong>투자 수익금(률):</strong>{' '}
-                                                {student.totalProfit !== 0 && (
+                                                {student.investmentProfit !== 0 && (
                                                     <span style={{marginRight: '0.25rem'}}>
-                                                        {student.totalProfit > 0 ? '▲' : '▼'}
+                                                        {student.investmentProfit > 0 ? '▲' : '▼'}
                                                     </span>
                                                 )}
-                                                {Math.abs(student.totalProfit).toLocaleString()}원 ({student.totalProfitRate.toFixed(2)}%)
+                                                {Math.abs(student.investmentProfit).toLocaleString()}원 ({student.investmentProfitRate.toFixed(2)}%)
                                             </p>
                                         </div>
                                     )

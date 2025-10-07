@@ -223,7 +223,7 @@ const App: React.FC = () => {
     
         let commission = 0;
         if (studentClass && studentClass.hasCommission) {
-            commission = stock.price * quantity * (studentClass.commissionRate / 100);
+            commission = Math.trunc(stock.price * quantity * (studentClass.commissionRate / 100));
         }
     
         if (type === 'buy') {
@@ -410,12 +410,18 @@ const App: React.FC = () => {
                     .filter(s => s.classId === selectedClass.id)
                     .map(s => {
                         const totalAssets = calculateTotalAssets(s, stocks);
-                        const totalBonus = transactions
-                            .filter(t => t.studentId === s.id && t.type === 'bonus')
-                            .reduce((sum, t) => sum + t.price, 0);
-                        const totalProfit = totalAssets - selectedClass.seedMoney - totalBonus;
+                        const totalProfit = Math.trunc(totalAssets - selectedClass.seedMoney);
                         const totalProfitRate = selectedClass.seedMoney > 0 ? (totalProfit / selectedClass.seedMoney) * 100 : 0;
-                        return { ...s, totalAssets, totalProfit, totalProfitRate };
+                        
+                        const studentTransactions = transactions.filter(t => t.studentId === s.id);
+                        const totalBonus = studentTransactions
+                            .filter(t => t.type === 'bonus')
+                            .reduce((acc, t) => acc + t.price, 0);
+
+                        const investmentProfit = totalProfit - totalBonus;
+                        const investmentProfitRate = selectedClass.seedMoney > 0 ? (investmentProfit / selectedClass.seedMoney) * 100 : 0;
+
+                        return { ...s, totalAssets, totalProfit, totalProfitRate, investmentProfit, investmentProfitRate };
                     });
 
                 return <ClassDetailView 
@@ -435,12 +441,18 @@ const App: React.FC = () => {
                     .filter(s => s.classId === studentClass.id)
                     .map(s => {
                         const totalAssets = calculateTotalAssets(s, stocks);
-                        const totalBonus = transactions
-                            .filter(t => t.studentId === s.id && t.type === 'bonus')
-                            .reduce((sum, t) => sum + t.price, 0);
-                        const totalProfit = totalAssets - studentClass.seedMoney - totalBonus;
+                        const totalProfit = Math.trunc(totalAssets - studentClass.seedMoney);
                         const totalProfitRate = studentClass.seedMoney > 0 ? (totalProfit / studentClass.seedMoney) * 100 : 0;
-                        return { ...s, totalAssets, totalProfit, totalProfitRate };
+                        
+                        const studentTransactions = transactions.filter(t => t.studentId === s.id);
+                        const totalBonus = studentTransactions
+                            .filter(t => t.type === 'bonus')
+                            .reduce((acc, t) => acc + t.price, 0);
+
+                        const investmentProfit = totalProfit - totalBonus;
+                        const investmentProfitRate = studentClass.seedMoney > 0 ? (investmentProfit / studentClass.seedMoney) * 100 : 0;
+
+                        return { ...s, totalAssets, totalProfit, totalProfitRate, investmentProfit, investmentProfitRate };
                     });
                 const studentWithAssets = {...currentStudent, totalAssets: calculateTotalAssets(currentStudent, stocks)};
 
