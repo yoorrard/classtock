@@ -94,7 +94,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
     };
     
     const handlePasswordResetRequest = (email: string) => {
-        // In a real app, this would call an API (e.g., Supabase Auth)
+        // In a real app, this would call an API (e.g., Firebase Authentication)
         // For this demo, we just simulate success.
         addToast(`'${email}'(으)로 비밀번호 재설정 이메일을 발송했습니다.`, 'success');
         setActiveModal(null);
@@ -127,7 +127,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
         { q: "학생들은 실제 돈으로 투자를 하나요?", a: "아니요, 'ClassStock'은 교육용 모의투자 서비스입니다. 모든 거래는 실제 금전적 가치가 없는 가상의 시드머니로 이루어집니다." },
         { q: "참여 코드를 잃어버렸어요.", a: "참여 코드는 학급을 개설하신 선생님께 다시 문의해주세요. 선생님은 교사 대시보드에서 언제든지 코드를 확인할 수 있습니다." },
         { q: "시드머니를 모두 사용하면 어떻게 되나요?", a: "기본적으로 초기 시드머니로만 활동하지만, 선생님께서 과제 보상이나 특별 활동 보너스로 추가 시드머니를 지급해주실 수 있습니다. 선생님과 상의해보세요." },
-        { q: "데이터는 안전하게 보관되나요?", a: "네, 'ClassStock'은 클라우드 데이터베이스(Supabase)를 사용하여 모든 사용자 데이터를 안전하게 관리합니다. 회원님의 정보와 투자 기록은 암호화되어 서버에 저장되며, 정기적으로 백업됩니다." }
+        { q: "데이터는 안전하게 보관되나요?", a: "네, 'ClassStock'은 클라우드 데이터베이스(Firebase)를 사용하여 모든 사용자 데이터를 안전하게 관리합니다. 회원님의 정보와 투자 기록은 암호화되어 서버에 저장되며, 정기적으로 백업됩니다." }
     ];
 
     return (
