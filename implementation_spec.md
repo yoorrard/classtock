@@ -162,3 +162,24 @@
 1.  **데이터 지속성**: 현재는 새로고침 시 데이터가 초기화됩니다. 실제 서비스 배포 시 `src/App.tsx`의 상태 관리 로직을 Firebase 등의 DB 연동 로직으로 교체해야 합니다.
 2.  **인증**: 현재 `TeacherLoginModal`의 구글 로그인 버튼은 UI만 구현되어 있으며, 실제 인증은 더미 데이터로 처리됩니다.
 3.  **보안**: 클라이언트 측에서 비밀번호 검증(`admin` 등)을 수행하므로, 프로덕션 환경에서는 서버 사이드 검증으로 변경이 필요합니다.
+
+---
+
+## 8. 배포 및 실행 시 유의사항 (Deployment & Execution Notes)
+
+이 코드를 다른 환경에서 실행할 때 다음 사항을 반드시 확인해야 합니다.
+
+### 8.1. 이미지 에셋 (Image Assets)
+- **요구사항**: 소스 코드(`src/components/landing/LandingPage.tsx`)는 다음 경로의 이미지 파일을 참조합니다.
+  - `assets/logo.png`
+  - `assets/background.png`
+  - `assets/gallery-1.png` ~ `assets/gallery-5.png`
+- **조치 필요**: 해당 경로에 실제 이미지 파일이 없으면 화면에 이미지가 나타나지 않습니다(Broken Image). 실행 전 적절한 플레이스홀더(Placeholder) 이미지나 실제 리소스를 `public/assets` 폴더에 위치시켜야 합니다.
+
+### 8.2. React 버전 호환성
+- **현재 설정**: `index.html`의 importmap은 **React 19.1.1 (Canary)** 버전을 사용하도록 설정되어 있습니다.
+- **유의사항**: React 18 이하 환경(일반적인 Create React App, Vite 기본 설정 등)에서 실행 시 `react-dom/client`의 타입 정의나 일부 Hook 동작에 차이가 있을 수 있습니다. 가능하면 최신 React 환경을 사용하거나 버전을 맞추는 것이 좋습니다.
+
+### 8.3. 외부 폰트 의존성
+- **설정**: `index.html` CSS에서 `cdn.jsdelivr.net`을 통해 'Gmarket Sans' 폰트를 로드합니다.
+- **유의사항**: 실행 환경이 폐쇄망(Private Network)이거나 인터넷 연결이 없는 경우 폰트가 기본 시스템 폰트로 대체되어 UI 디자인이 달라 보일 수 있습니다. 인터넷 연결이 가능한 환경에서 실행해야 합니다.
