@@ -5,7 +5,6 @@ import PolicyModal from '../shared/PolicyModal';
 import StudentLoginModal from './StudentLoginModal';
 import TeacherLoginModal from './TeacherLoginModal';
 import TeacherRegisterModal from './TeacherRegisterModal';
-import AdminLoginModal from '../admin/AdminLoginModal';
 import PasswordResetModal from './PasswordResetModal';
 import LandingHeader from './LandingHeader';
 import PopupNoticeModal from './PopupNoticeModal';
@@ -24,16 +23,15 @@ interface LandingPageProps {
     popupNotices: PopupNotice[];
     onNavigate: (view: View) => void;
     onStudentJoin: (code: string, name: string) => void;
-    // FIX: Update onTeacherLogin to accept an email string to match the handler function.
     onTeacherLogin: (email: string) => void;
     onTeacherRegister: (email: string, password: string) => void;
-    onAdminLogin: (password: string) => void;
+    onAdminLogin: () => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
 }
 const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavigate, onStudentJoin, onTeacherLogin, onTeacherRegister, onAdminLogin, addToast }) => {
     const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
-    const [activeModal, setActiveModal] = useState<'student' | 'teacherLogin' | 'teacherRegister' | 'admin' | 'passwordReset' | null>(null);
+    const [activeModal, setActiveModal] = useState<'student' | 'teacherLogin' | 'teacherRegister' | 'passwordReset' | null>(null);
     const [activePopupNotices, setActivePopupNotices] = useState<PopupNotice[]>([]);
     const latestNotices = notices.slice(0, 3);
     const [currentPhoto, setCurrentPhoto] = useState(0);
@@ -285,7 +283,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
                         <p>© 2025 ClassStock. All Rights Reserved.</p>
                         <p>Created by 유영재</p>
                     </div>
-                    <button onClick={() => setActiveModal('admin')} className="footer-link" style={{position: 'absolute', right: 0, top: '1rem', opacity: 0.8}}>Admin</button>
                 </footer>
                 
                 {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
@@ -295,6 +292,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
                     onLoginSuccess={onTeacherLogin}
                     onSwitchToRegister={() => setActiveModal('teacherRegister')}
                     onForgotPassword={() => setActiveModal('passwordReset')}
+                    onAdminLogin={onAdminLogin}
                 />}
                 {activeModal === 'teacherRegister' && <TeacherRegisterModal
                     onClose={() => setActiveModal(null)}
@@ -306,7 +304,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
                     onClose={() => setActiveModal(null)}
                     onRequestReset={handlePasswordResetRequest}
                 />}
-                {activeModal === 'admin' && <AdminLoginModal onClose={() => setActiveModal(null)} onLogin={(password) => { onAdminLogin(password); setActiveModal(null); }} />}
                 {activePopupNotices.length > 0 && 
                     <PopupNoticeModal 
                         notice={activePopupNotices[0]} 

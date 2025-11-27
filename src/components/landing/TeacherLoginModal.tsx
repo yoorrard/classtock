@@ -6,15 +6,23 @@ interface TeacherLoginModalProps {
     onLoginSuccess: (email: string) => void;
     onSwitchToRegister: () => void;
     onForgotPassword: () => void;
+    onAdminLogin: () => void;
 }
-const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginSuccess, onSwitchToRegister, onForgotPassword }) => {
+const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginSuccess, onSwitchToRegister, onForgotPassword, onAdminLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        // FIX: Pass the email state on login.
+        
+        // Check for admin credentials
+        if (email === 'admin@classstock.com' && password === 'admin') {
+            onAdminLogin();
+            return;
+        }
+
+        // Standard teacher login
         onLoginSuccess(email);
     };
     

@@ -303,14 +303,10 @@ const App: React.FC = () => {
         setView('landing'); 
     };
     
-    const handleAdminLogin = (password: string) => {
-        if (password === 'admin') {
-            setIsAdminLoggedIn(true);
-            setView('admin_dashboard');
-            addToast('관리자 모드로 로그인했습니다.', 'success');
-        } else {
-            addToast('비밀번호가 올바르지 않습니다.', 'error');
-        }
+    const handleAdminLogin = () => {
+        setIsAdminLoggedIn(true);
+        setView('admin_dashboard');
+        addToast('관리자 모드로 로그인했습니다.', 'success');
     };
     
     const handleAdminLogout = () => {
