@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ClassInfo, View, ToastMessage } from '../../types';
 import CreateClassModal from './CreateClassModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import WithdrawConfirmationModal from './WithdrawConfirmationModal';
 import LandingHeader from '../landing/LandingHeader';
 
 const ClassCard: React.FC<{ classInfo: ClassInfo; onManage: () => void; onDelete: () => void; }> = ({ classInfo, onManage, onDelete }) => {
@@ -26,10 +27,13 @@ interface TeacherDashboardProps {
     onDeleteClass: (classId: string) => void;
     onNavigate: (view: View) => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
+    currentTeacherEmail: string | null;
+    onWithdraw: () => void;
 }
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, onCreateClass, onSelectClass, onDeleteClass, onNavigate, addToast }) => {
+const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, onCreateClass, onSelectClass, onDeleteClass, onNavigate, addToast, currentTeacherEmail, onWithdraw }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [classToDelete, setClassToDelete] = useState<ClassInfo | null>(null);
+    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
     const handleCreate = (newClassData: Omit<ClassInfo, 'id' | 'allowedStocks'>) => { onCreateClass(newClassData); setIsModalOpen(false); };
     
@@ -59,9 +63,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, on
                             <p style={{ margin: '0.25rem 0 0 0' }}>{hasClasses ? '내 학급 목록입니다.' : '학급을 만들고 관리하세요.'}</p>
                         </div>
                         <div style={{display: 'flex', gap: '0.5rem'}}>
-                            {hasClasses && (<button 
-                                onClick={() => setIsModalOpen(true)} 
-                                className="button" 
+                            {hasClasses && (<button
+                                onClick={() => setIsModalOpen(true)}
+                                className="button"
                                 style={{ width: 'auto', padding: '0.5rem 1rem' }}
                                 disabled={isClassLimitReached}
                                 title={isClassLimitReached ? '학급은 최대 2개까지 생성할 수 있습니다.' : '새로운 학급을 만듭니다.'}
@@ -69,6 +73,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, on
                                 + 새 학급
                             </button>)}
                             <button onClick={onBack} className="button button-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>로그아웃</button>
+                            <button
+                                onClick={() => setShowWithdrawModal(true)}
+                                className="button button-danger"
+                                style={{ width: 'auto', padding: '0.5rem 1rem' }}
+                                title="회원 탈퇴"
+                            >
+                                탈퇴
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -99,6 +111,17 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBack, classes, on
                 )}
                 {isModalOpen && <CreateClassModal onClose={() => setIsModalOpen(false)} onCreate={handleCreate} />}
                 {classToDelete && <DeleteConfirmationModal classInfo={classToDelete} onClose={() => setClassToDelete(null)} onConfirm={handleDeleteConfirm} />}
+                {showWithdrawModal && currentTeacherEmail && (
+                    <WithdrawConfirmationModal
+                        email={currentTeacherEmail}
+                        classCount={classes.length}
+                        onClose={() => setShowWithdrawModal(false)}
+                        onConfirm={() => {
+                            setShowWithdrawModal(false);
+                            onWithdraw();
+                        }}
+                    />
+                )}
             </div>
         </>
     );

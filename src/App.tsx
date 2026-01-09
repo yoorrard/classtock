@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost, PopupNotice } from './types';
+import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost, PopupNotice, Teacher } from './types';
 import { mockStockData, mockNotices, mockQandAPosts, mockPopupNotices } from './data';
 
 import LandingPage from './components/landing/LandingPage';
@@ -25,6 +25,7 @@ const App: React.FC = () => {
     const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
     const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState(false);
     const [currentTeacherEmail, setCurrentTeacherEmail] = useState<string | null>(null);
+    const [teachers, setTeachers] = useState<Teacher[]>([]);
     
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
@@ -145,18 +146,68 @@ const App: React.FC = () => {
     };
     
     const handleTeacherRegister = (email: string, password: string) => {
-        // This is a placeholder for actual registration logic.
-        // For this demo, we'll just log them in immediately after "registering".
+        // Check if email already exists
+        const existingTeacher = teachers.find(t => t.email.toLowerCase() === email.toLowerCase());
+        if (existingTeacher) {
+            addToast('이미 등록된 이메일입니다.', 'error');
+            return;
+        }
+
+        // Create new teacher
+        const newTeacher: Teacher = {
+            id: `T${Date.now()}`,
+            email,
+            password, // In production, this should be hashed
+            createdAt: Date.now()
+        };
+        setTeachers(prev => [...prev, newTeacher]);
+
         addToast('회원가입이 완료되었습니다. 자동으로 로그인됩니다.', 'success');
         setIsTeacherLoggedIn(true);
         setCurrentTeacherEmail(email);
         setView('teacher_dashboard');
     };
 
-    const handleTeacherLogin = (email: string) => {
+    const handleTeacherLogin = (email: string, password: string) => {
+        // Check credentials (skip for Google auth which passes empty password)
+        if (password) {
+            const teacher = teachers.find(t =>
+                t.email.toLowerCase() === email.toLowerCase() && t.password === password
+            );
+            if (!teacher) {
+                addToast('이메일 또는 비밀번호가 일치하지 않습니다.', 'error');
+                return;
+            }
+        }
+
         setIsTeacherLoggedIn(true);
-        setCurrentTeacherEmail(email); // In a real app, this would come from the login response
+        setCurrentTeacherEmail(email);
         setView('teacher_dashboard');
+    };
+
+    const handleTeacherWithdraw = () => {
+        if (!currentTeacherEmail) return;
+
+        // Find all classes owned by this teacher (by email match via class creation context)
+        // Since classes don't have teacherEmail field yet, we'll delete classes based on current session
+        const teacherClassIds = classes.map(c => c.id);
+        const studentIdsToDelete = students
+            .filter(s => teacherClassIds.includes(s.classId))
+            .map(s => s.id);
+
+        // Delete teacher's classes, students, and transactions
+        setClasses([]);
+        setStudents(prev => prev.filter(s => !teacherClassIds.includes(s.classId)));
+        setTransactions(prev => prev.filter(t => !studentIdsToDelete.includes(t.studentId)));
+
+        // Delete teacher account
+        setTeachers(prev => prev.filter(t => t.email.toLowerCase() !== currentTeacherEmail.toLowerCase()));
+
+        // Logout
+        setIsTeacherLoggedIn(false);
+        setCurrentTeacherEmail(null);
+        setView('landing');
+        addToast('회원 탈퇴가 완료되었습니다.', 'success');
     };
     
     const handleBulkRegisterStudents = (classId: string, studentNames: string[]) => {
@@ -391,14 +442,16 @@ const App: React.FC = () => {
 
         switch (view) {
             case 'teacher_dashboard':
-                return <TeacherDashboard 
-                    onBack={handleLogout} 
+                return <TeacherDashboard
+                    onBack={handleLogout}
                     classes={classes}
                     onCreateClass={handleCreateClass}
                     onSelectClass={handleSelectClass}
                     onDeleteClass={handleDeleteClass}
                     onNavigate={setView}
                     addToast={addToast}
+                    currentTeacherEmail={currentTeacherEmail}
+                    onWithdraw={handleTeacherWithdraw}
                 />;
             case 'class_detail':
                  if (!selectedClass) { setView('teacher_dashboard'); return null; }

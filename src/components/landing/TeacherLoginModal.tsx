@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 
 interface TeacherLoginModalProps {
     onClose: () => void;
-    // FIX: Update onLoginSuccess to accept an email to pass it up to the parent component.
-    onLoginSuccess: (email: string) => void;
+    onLoginSuccess: (email: string, password: string) => void;
     onSwitchToRegister: () => void;
     onForgotPassword: () => void;
     onAdminLogin: () => void;
@@ -15,7 +14,7 @@ const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginS
     
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Check for admin credentials
         if (email === 'admin@classstock.com' && password === 'admin') {
             onAdminLogin();
@@ -23,12 +22,12 @@ const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginS
         }
 
         // Standard teacher login
-        onLoginSuccess(email);
+        onLoginSuccess(email, password);
     };
-    
+
     const handleGoogleAuth = () => {
-        // FIX: Pass a dummy email for Google auth for demo purposes.
-        onLoginSuccess('google_user@example.com');
+        // Google auth - pass empty password to skip credential check
+        onLoginSuccess('google_user@example.com', '');
     };
 
     const EyeOpenIcon = (

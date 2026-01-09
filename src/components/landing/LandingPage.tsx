@@ -23,7 +23,7 @@ interface LandingPageProps {
     popupNotices: PopupNotice[];
     onNavigate: (view: View) => void;
     onStudentJoin: (code: string, name: string) => void;
-    onTeacherLogin: (email: string) => void;
+    onTeacherLogin: (email: string, password: string) => void;
     onTeacherRegister: (email: string, password: string) => void;
     onAdminLogin: () => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;

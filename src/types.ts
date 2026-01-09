@@ -81,3 +81,10 @@ export interface QnAPost {
   answeredAt?: number;
   isSecret: boolean;
 }
+
+export interface Teacher {
+  id: string;
+  email: string;
+  password: string; // In production, this should be hashed
+  createdAt: number;
+}
