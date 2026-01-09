@@ -16,6 +16,7 @@ export interface ClassInfo {
     seedMoney: number;
     hasCommission: boolean;
     commissionRate: number; // e.g. 0.1 for 0.1%
+    teacherEmail: string; // Email of the teacher who created this class
 }
 export interface PortfolioItem { stockCode: string; quantity: number; averagePrice: number; }
 export interface StudentInfo {

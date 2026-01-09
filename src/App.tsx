@@ -98,12 +98,24 @@ const App: React.FC = () => {
     };
 
     // --- HANDLER FUNCTIONS ---
-    const handleCreateClass = (newClassData: Omit<ClassInfo, 'id'>) => {
-        if (classes.length >= 2) {
+    const handleCreateClass = (newClassData: Omit<ClassInfo, 'id' | 'teacherEmail'>) => {
+        if (!currentTeacherEmail) {
+            addToast('로그인이 필요합니다.', 'error');
+            return;
+        }
+
+        // Count classes owned by current teacher
+        const teacherClasses = classes.filter(c => c.teacherEmail === currentTeacherEmail);
+        if (teacherClasses.length >= 2) {
             addToast('학급은 최대 2개까지만 생성할 수 있습니다.', 'error');
             return;
         }
-        const newClass: ClassInfo = { id: `C${Date.now()}`, ...newClassData };
+
+        const newClass: ClassInfo = {
+            id: `C${Date.now()}`,
+            ...newClassData,
+            teacherEmail: currentTeacherEmail
+        };
         setClasses(prev => [...prev, newClass]);
         addToast(`'${newClass.name}' 학급이 생성되었습니다.`, 'success');
     };
@@ -188,15 +200,17 @@ const App: React.FC = () => {
     const handleTeacherWithdraw = () => {
         if (!currentTeacherEmail) return;
 
-        // Find all classes owned by this teacher (by email match via class creation context)
-        // Since classes don't have teacherEmail field yet, we'll delete classes based on current session
-        const teacherClassIds = classes.map(c => c.id);
+        // Find all classes owned by this teacher
+        const teacherClassIds = classes
+            .filter(c => c.teacherEmail === currentTeacherEmail)
+            .map(c => c.id);
+
         const studentIdsToDelete = students
             .filter(s => teacherClassIds.includes(s.classId))
             .map(s => s.id);
 
         // Delete teacher's classes, students, and transactions
-        setClasses([]);
+        setClasses(prev => prev.filter(c => c.teacherEmail !== currentTeacherEmail));
         setStudents(prev => prev.filter(s => !teacherClassIds.includes(s.classId)));
         setTransactions(prev => prev.filter(t => !studentIdsToDelete.includes(t.studentId)));
 
@@ -431,6 +445,9 @@ const App: React.FC = () => {
     };
     
     // --- DERIVED STATE ---
+    const teacherClasses = currentTeacherEmail
+        ? classes.filter(c => c.teacherEmail === currentTeacherEmail)
+        : [];
     const selectedClass = classes.find(c => c.id === selectedClassId);
     const currentStudent = students.find(s => s.id === currentStudentId);
     const studentClass = currentStudent ? classes.find(c => c.id === currentStudent.classId) : null;
@@ -444,7 +461,7 @@ const App: React.FC = () => {
             case 'teacher_dashboard':
                 return <TeacherDashboard
                     onBack={handleLogout}
-                    classes={classes}
+                    classes={teacherClasses}
                     onCreateClass={handleCreateClass}
                     onSelectClass={handleSelectClass}
                     onDeleteClass={handleDeleteClass}
