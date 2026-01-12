@@ -2,16 +2,22 @@ import React, { useState } from 'react';
 
 interface PasswordResetModalProps {
     onClose: () => void;
-    onRequestReset: (email: string) => void;
+    onRequestReset: (email: string) => Promise<void> | void;
 }
 
 const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ onClose, onRequestReset }) => {
     const [email, setEmail] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (email) {
-            onRequestReset(email);
+        if (email && !isLoading) {
+            setIsLoading(true);
+            try {
+                await onRequestReset(email);
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -40,8 +46,10 @@ const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ onClose, onRequ
                         />
                     </div>
                     <div className="action-buttons">
-                        <button type="button" className="button button-secondary" onClick={onClose}>취소</button>
-                        <button type="submit" className="button">비밀번호 재설정 요청</button>
+                        <button type="button" className="button button-secondary" onClick={onClose} disabled={isLoading}>취소</button>
+                        <button type="submit" className="button" disabled={isLoading}>
+                            {isLoading ? '요청 중...' : '비밀번호 재설정 요청'}
+                        </button>
                     </div>
                 </form>
             </div>

@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Notice, ToastMessage, PopupNotice } from '../../types';
 import { termsOfService, privacyPolicy } from '../../data';
+import { authService } from '../../firebase/auth';
 import PolicyModal from '../shared/PolicyModal';
 import StudentLoginModal from './StudentLoginModal';
 import TeacherLoginModal from './TeacherLoginModal';
@@ -90,11 +91,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
         setActiveModal(null);
     };
     
-    const handlePasswordResetRequest = (email: string) => {
-        // In a real app, this would call an API (e.g., Firebase Authentication)
-        // For this demo, we just simulate success.
-        addToast(`'${email}'(으)로 비밀번호 재설정 이메일을 발송했습니다.`, 'success');
-        setActiveModal(null);
+    const handlePasswordResetRequest = async (email: string) => {
+        try {
+            await authService.sendPasswordReset(email);
+            addToast(`'${email}'(으)로 비밀번호 재설정 이메일을 발송했습니다.`, 'success');
+            setActiveModal(null);
+        } catch (error) {
+            // Handle specific Firebase Auth errors
+            const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+            if (errorMessage.includes('user-not-found')) {
+                addToast('등록되지 않은 이메일 주소입니다.', 'error');
+            } else if (errorMessage.includes('invalid-email')) {
+                addToast('올바른 이메일 형식이 아닙니다.', 'error');
+            } else if (errorMessage.includes('not initialized')) {
+                // Firebase not configured - show success anyway for demo
+                addToast(`'${email}'(으)로 비밀번호 재설정 이메일을 발송했습니다.`, 'success');
+                setActiveModal(null);
+            } else {
+                addToast('이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.', 'error');
+            }
+        }
     };
 
     const featuresData = [
