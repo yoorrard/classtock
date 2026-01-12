@@ -4,6 +4,8 @@ import { mockStockData, mockNotices, mockQandAPosts, mockPopupNotices } from './
 import { getStockData, getDataSourceInfo } from './services/stockService';
 import { adminService } from './firebase/services';
 import { ToastContainer } from './components/shared/Toast';
+import ErrorBoundary from './components/shared/ErrorBoundary';
+import { setupGlobalErrorHandler, logError } from './services/errorService';
 
 // Lazy load page components for better performance
 const LandingPage = lazy(() => import('./components/landing/LandingPage'));
@@ -55,8 +57,16 @@ const App: React.FC = () => {
             setStocks(stockData);
             setDataSource(getDataSourceInfo());
         } catch (error) {
-            console.error('Failed to fetch stock data:', error);
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'stock_data_fetch',
+                additionalInfo: { source: getDataSourceInfo().source }
+            });
         }
+    }, []);
+
+    // Setup global error handler on mount
+    useEffect(() => {
+        setupGlobalErrorHandler();
     }, []);
 
     // Initial fetch and periodic updates
@@ -593,12 +603,14 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="app-container">
-            <Suspense fallback={<LoadingSpinner />}>
-                {renderView()}
-            </Suspense>
-            <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-        </div>
+        <ErrorBoundary>
+            <div className="app-container">
+                <Suspense fallback={<LoadingSpinner />}>
+                    {renderView()}
+                </Suspense>
+                <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+            </div>
+        </ErrorBoundary>
     );
 };
 
