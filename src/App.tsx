@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost, PopupNotice, Teacher } from './types';
 import { mockStockData, mockNotices, mockQandAPosts, mockPopupNotices } from './data';
+import { getStockData, getDataSourceInfo } from './services/stockService';
 
 import LandingPage from './components/landing/LandingPage';
 import TeacherDashboard from './components/teacher/TeacherDashboard';
@@ -29,44 +30,31 @@ const App: React.FC = () => {
     
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
-    
-    // --- AUTO PRICE UPDATE (KST 16:10 Daily) ---
-    useEffect(() => {
-        const lastUpdateDateStr = localStorage.getItem('classstock_lastUpdateDate');
-        
-        const now = new Date();
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-        const KST_OFFSET = 9 * 60 * 60 * 1000;
-        const kstNow = new Date(utc + KST_OFFSET);
-        
-        const todayKSTString = kstNow.toISOString().split('T')[0];
+    const [dataSource, setDataSource] = useState<{ source: 'kis' | 'mock'; isLive: boolean }>({ source: 'mock', isLive: false });
 
-        const isUpdateTimePassed = kstNow.getUTCHours() > 16 || (kstNow.getUTCHours() === 16 && kstNow.getUTCMinutes() >= 10);
-        
-        let needsUpdate = false;
-        if (!lastUpdateDateStr) {
-            // First time user. Update if it's past update time.
-            needsUpdate = isUpdateTimePassed;
-        } else {
-            // Returning user. Update if last update was before today AND it's past update time.
-            needsUpdate = (lastUpdateDateStr < todayKSTString) && isUpdateTimePassed;
-        }
-
-        if (needsUpdate) {
-            setStocks(prevStocks => prevStocks.map(stock => {
-                const changePercent = (Math.random() - 0.45) * 0.1; // -4.5% to +5.5% change
-                const newPrice = Math.max(100, Math.round(stock.price * (1 + changePercent) / 100) * 100);
-                return { ...stock, price: newPrice };
-            }));
-            localStorage.setItem('classstock_lastUpdateDate', todayKSTString);
-        } else if (!lastUpdateDateStr) {
-            // First time user, but before update time.
-            // Set last update to yesterday so it can update later today if they reopen.
-            const yesterdayKST = new Date(kstNow.getTime());
-            yesterdayKST.setUTCDate(yesterdayKST.getUTCDate() - 1);
-            localStorage.setItem('classstock_lastUpdateDate', yesterdayKST.toISOString().split('T')[0]);
+    // --- STOCK DATA FETCHING ---
+    const fetchStockData = useCallback(async () => {
+        try {
+            const stockData = await getStockData();
+            setStocks(stockData);
+            setDataSource(getDataSourceInfo());
+        } catch (error) {
+            console.error('Failed to fetch stock data:', error);
         }
     }, []);
+
+    // Initial fetch and periodic updates
+    useEffect(() => {
+        // Initial fetch
+        fetchStockData();
+
+        // Update every minute if using real data, every 5 minutes otherwise
+        const info = getDataSourceInfo();
+        const interval = info.source === 'kis' && info.isLive ? 60000 : 300000;
+
+        const timer = setInterval(fetchStockData, interval);
+        return () => clearInterval(timer);
+    }, [fetchStockData]);
 
 
     // --- HELPER FUNCTIONS ---
