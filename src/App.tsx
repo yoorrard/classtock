@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost, PopupNotice, Teacher } from './types';
 import { mockStockData, mockNotices, mockQandAPosts, mockPopupNotices } from './data';
 import { getStockData, getDataSourceInfo } from './services/stockService';
-import { adminService } from './firebase/services';
+import { initializeFirebase, isFirebaseAvailable } from './firebase';
+import { isFirebaseConfigured } from './firebase/config';
+import { authService } from './firebase/auth';
+import { adminService, teacherService, classService, studentService, transactionService } from './firebase/services';
 import { ToastContainer } from './components/shared/Toast';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import { setupGlobalErrorHandler, logError } from './services/errorService';
@@ -44,11 +47,16 @@ const App: React.FC = () => {
     const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
     const [isTeacherLoggedIn, setIsTeacherLoggedIn] = useState(false);
     const [currentTeacherEmail, setCurrentTeacherEmail] = useState<string | null>(null);
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
-    
+    const [currentTeacherId, setCurrentTeacherId] = useState<string | null>(null);
+
     const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
     const [currentStudentId, setCurrentStudentId] = useState<string | null>(null);
     const [dataSource, setDataSource] = useState<{ source: 'kis' | 'mock'; isLive: boolean }>({ source: 'mock', isLive: false });
+
+    // Firebase 상태
+    const [firebaseReady, setFirebaseReady] = useState(false);
+    const [firebaseError, setFirebaseError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     // --- STOCK DATA FETCHING ---
     const fetchStockData = useCallback(async () => {
@@ -68,6 +76,108 @@ const App: React.FC = () => {
     useEffect(() => {
         setupGlobalErrorHandler();
     }, []);
+
+    // Firebase 초기화 및 인증 상태 감시
+    useEffect(() => {
+        const initApp = async () => {
+            // Firebase 설정 확인
+            if (!isFirebaseConfigured()) {
+                setFirebaseError('Firebase 설정이 필요합니다. .env 파일에 Firebase 구성 값을 설정해주세요.');
+                setIsLoading(false);
+                return;
+            }
+
+            try {
+                // Firebase 초기화
+                initializeFirebase();
+
+                if (!isFirebaseAvailable()) {
+                    setFirebaseError('Firebase를 초기화할 수 없습니다. 설정을 확인해주세요.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                setFirebaseReady(true);
+
+                // 인증 상태 변화 감지
+                const unsubscribe = authService.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        // 로그인된 상태
+                        setCurrentTeacherEmail(user.email);
+                        setCurrentTeacherId(user.uid);
+
+                        // 관리자 확인
+                        const isAdmin = await adminService.isAdmin(user.email || '');
+                        if (isAdmin) {
+                            setIsAdminLoggedIn(true);
+                            setIsTeacherLoggedIn(false);
+                            setView('admin_dashboard');
+                        } else {
+                            setIsAdminLoggedIn(false);
+                            setIsTeacherLoggedIn(true);
+
+                            // 교사 데이터 및 학급 데이터 로드
+                            await loadTeacherData(user.uid, user.email || '');
+                            setView('teacher_dashboard');
+                        }
+                    } else {
+                        // 로그아웃 상태
+                        setCurrentTeacherEmail(null);
+                        setCurrentTeacherId(null);
+                        setIsTeacherLoggedIn(false);
+                        setIsAdminLoggedIn(false);
+                        setClasses([]);
+                        setStudents([]);
+                        setTransactions([]);
+                    }
+                    setIsLoading(false);
+                });
+
+                return () => unsubscribe();
+            } catch (error) {
+                logError(error instanceof Error ? error : new Error(String(error)), {
+                    type: 'firebase_init',
+                    additionalInfo: { message: 'Firebase 초기화 실패' }
+                });
+                setFirebaseError('Firebase 초기화 중 오류가 발생했습니다.');
+                setIsLoading(false);
+            }
+        };
+
+        initApp();
+    }, []);
+
+    // 교사 데이터 로드 함수
+    const loadTeacherData = async (teacherId: string, teacherEmail: string) => {
+        try {
+            // 교사의 학급 목록 로드
+            const teacherClasses = await classService.getByTeacherEmail(teacherEmail);
+            setClasses(teacherClasses);
+
+            // 각 학급의 학생 및 거래 데이터 로드
+            const allStudents: StudentInfo[] = [];
+            const allTransactions: Transaction[] = [];
+
+            for (const classInfo of teacherClasses) {
+                const classStudents = await studentService.getByClassId(classInfo.id);
+                allStudents.push(...classStudents);
+
+                for (const student of classStudents) {
+                    const studentTransactions = await transactionService.getByStudentId(student.id);
+                    allTransactions.push(...studentTransactions);
+                }
+            }
+
+            setStudents(allStudents);
+            setTransactions(allTransactions);
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'data_load',
+                additionalInfo: { teacherId, teacherEmail }
+            });
+            addToast('데이터를 불러오는 중 오류가 발생했습니다.', 'error');
+        }
+    };
 
     // Initial fetch and periodic updates
     useEffect(() => {
@@ -112,37 +222,70 @@ const App: React.FC = () => {
     };
 
     // --- HANDLER FUNCTIONS ---
-    const handleCreateClass = (newClassData: Omit<ClassInfo, 'id' | 'teacherEmail'>) => {
+    const handleCreateClass = async (newClassData: Omit<ClassInfo, 'id' | 'teacherEmail'>) => {
         if (!currentTeacherEmail) {
             addToast('로그인이 필요합니다.', 'error');
             return;
         }
 
         // Count classes owned by current teacher
-        const teacherClasses = classes.filter(c => c.teacherEmail === currentTeacherEmail);
-        if (teacherClasses.length >= 2) {
+        const teacherClassList = classes.filter(c => c.teacherEmail === currentTeacherEmail);
+        if (teacherClassList.length >= 2) {
             addToast('학급은 최대 2개까지만 생성할 수 있습니다.', 'error');
             return;
         }
 
-        const newClass: ClassInfo = {
-            id: `C${Date.now()}`,
-            ...newClassData,
-            teacherEmail: currentTeacherEmail
-        };
-        setClasses(prev => [...prev, newClass]);
-        addToast(`'${newClass.name}' 학급이 생성되었습니다.`, 'success');
+        try {
+            const newClass: ClassInfo = {
+                id: `C${Date.now()}`,
+                ...newClassData,
+                teacherEmail: currentTeacherEmail
+            };
+
+            // Firestore에 저장
+            await classService.create(newClass);
+            setClasses(prev => [...prev, newClass]);
+            addToast(`'${newClass.name}' 학급이 생성되었습니다.`, 'success');
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'class_create',
+                additionalInfo: { teacherEmail: currentTeacherEmail }
+            });
+            addToast('학급 생성 중 오류가 발생했습니다.', 'error');
+        }
     };
 
-    const handleDeleteClass = (classId: string) => {
-        const studentIdsToDelete = students
-            .filter(s => s.classId === classId)
-            .map(s => s.id);
+    const handleDeleteClass = async (classId: string) => {
+        try {
+            const classStudents = students.filter(s => s.classId === classId);
 
-        setClasses(prev => prev.filter(c => c.id !== classId));
-        setStudents(prev => prev.filter(s => s.classId !== classId));
-        setTransactions(prev => prev.filter(t => !studentIdsToDelete.includes(t.studentId)));
-        addToast('학급이 삭제되었습니다.', 'success');
+            // 학급 내 학생들의 거래 내역 삭제
+            for (const student of classStudents) {
+                const studentTransactions = transactions.filter(t => t.studentId === student.id);
+                for (const tx of studentTransactions) {
+                    await transactionService.delete(tx.id);
+                }
+                // 학생 삭제
+                await studentService.delete(student.id);
+            }
+
+            // 학급 삭제
+            await classService.delete(classId);
+
+            // 로컬 상태 업데이트
+            const studentIdsToDelete = classStudents.map(s => s.id);
+            setClasses(prev => prev.filter(c => c.id !== classId));
+            setStudents(prev => prev.filter(s => s.classId !== classId));
+            setTransactions(prev => prev.filter(t => !studentIdsToDelete.includes(t.studentId)));
+
+            addToast('학급이 삭제되었습니다.', 'success');
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'class_delete',
+                additionalInfo: { classId }
+            });
+            addToast('학급 삭제 중 오류가 발생했습니다.', 'error');
+        }
     };
 
     const handleSelectClass = (classId: string) => {
@@ -150,183 +293,277 @@ const App: React.FC = () => {
         setView('class_detail');
     };
     
-    const handleStudentJoin = (code: string, name: string) => {
-        const classToJoin = classes.find(c => `C${c.id.substring(c.id.length - 6)}`.toLowerCase() === code.toLowerCase().trim());
-        if (!classToJoin) {
-            addToast('유효하지 않은 참여 코드입니다.', 'error');
-            return;
-        }
-    
-        const studentToLogin = students.find(s => 
-            s.classId === classToJoin.id && 
-            s.nickname.toLowerCase() === name.trim().toLowerCase()
-        );
-    
-        if (studentToLogin) {
-            setCurrentStudentId(studentToLogin.id);
-            setView('student_dashboard');
-            addToast(`'${classToJoin.name}'에 오신 것을 환영합니다!`, 'success');
-        } else {
-            addToast('학급에 등록된 이름이 아닙니다. 선생님께 확인해주세요.', 'error');
+    const handleStudentJoin = async (code: string, name: string) => {
+        try {
+            // 모든 학급에서 코드로 검색
+            const allClasses = await classService.getAll();
+            const classToJoin = allClasses.find(c =>
+                `C${c.id.substring(c.id.length - 6)}`.toLowerCase() === code.toLowerCase().trim()
+            );
+
+            if (!classToJoin) {
+                addToast('유효하지 않은 참여 코드입니다.', 'error');
+                return;
+            }
+
+            // 학급의 학생 목록 로드
+            const classStudents = await studentService.getByClassId(classToJoin.id);
+            const studentToLogin = classStudents.find(s =>
+                s.nickname.toLowerCase() === name.trim().toLowerCase()
+            );
+
+            if (studentToLogin) {
+                // 학생의 거래 내역 로드
+                const studentTransactions = await transactionService.getByStudentId(studentToLogin.id);
+
+                // 로컬 상태 업데이트
+                setClasses([classToJoin]);
+                setStudents(classStudents);
+                setTransactions(studentTransactions);
+                setCurrentStudentId(studentToLogin.id);
+                setView('student_dashboard');
+
+                addToast(`'${classToJoin.name}'에 오신 것을 환영합니다!`, 'success');
+            } else {
+                addToast('학급에 등록된 이름이 아닙니다. 선생님께 확인해주세요.', 'error');
+            }
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'student_join',
+                additionalInfo: { code }
+            });
+            addToast('학급 참여 중 오류가 발생했습니다.', 'error');
         }
     };
     
-    const handleTeacherRegister = (email: string, password: string) => {
-        // Check if email already exists
-        const existingTeacher = teachers.find(t => t.email.toLowerCase() === email.toLowerCase());
-        if (existingTeacher) {
-            addToast('이미 등록된 이메일입니다.', 'error');
+    const handleTeacherRegister = async (email: string, password: string) => {
+        if (!firebaseReady) {
+            addToast('서비스가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.', 'error');
             return;
         }
 
-        // Create new teacher
-        const newTeacher: Teacher = {
-            id: `T${Date.now()}`,
-            email,
-            password, // In production, this should be hashed
-            createdAt: Date.now()
-        };
-        setTeachers(prev => [...prev, newTeacher]);
+        try {
+            // Firebase Auth로 회원가입
+            const user = await authService.register(email, password);
 
-        addToast('회원가입이 완료되었습니다. 자동으로 로그인됩니다.', 'success');
-        setIsTeacherLoggedIn(true);
-        setCurrentTeacherEmail(email);
-        setView('teacher_dashboard');
+            // Firestore에 교사 정보 저장
+            await teacherService.create({
+                id: user.uid,
+                email: user.email || email,
+                createdAt: Date.now()
+            });
+
+            addToast('회원가입이 완료되었습니다.', 'success');
+            // onAuthStateChanged에서 자동으로 로그인 처리됨
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : '회원가입 중 오류가 발생했습니다.';
+
+            // Firebase Auth 에러 메시지 한글화
+            let koreanMessage = errorMessage;
+            if (errorMessage.includes('email-already-in-use')) {
+                koreanMessage = '이미 등록된 이메일입니다.';
+            } else if (errorMessage.includes('weak-password')) {
+                koreanMessage = '비밀번호는 6자 이상이어야 합니다.';
+            } else if (errorMessage.includes('invalid-email')) {
+                koreanMessage = '유효하지 않은 이메일 형식입니다.';
+            }
+
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'auth_register',
+                additionalInfo: { email }
+            });
+            addToast(koreanMessage, 'error');
+        }
     };
 
     const handleTeacherLogin = async (email: string, password: string) => {
-        // Check credentials (skip for Google auth which passes empty password)
-        if (password) {
-            const teacher = teachers.find(t =>
-                t.email.toLowerCase() === email.toLowerCase() && t.password === password
-            );
-            if (!teacher) {
-                // Check if it's an admin login attempt
-                const isAdmin = await adminService.isAdmin(email);
-                if (!isAdmin) {
-                    addToast('이메일 또는 비밀번호가 일치하지 않습니다.', 'error');
-                    return;
-                }
-            }
-        }
-
-        // Check if user is admin
-        const isAdmin = await adminService.isAdmin(email);
-        if (isAdmin) {
-            setIsAdminLoggedIn(true);
-            setCurrentTeacherEmail(email);
-            setView('admin_dashboard');
-            addToast('관리자 모드로 로그인했습니다.', 'success');
+        if (!firebaseReady) {
+            addToast('서비스가 준비되지 않았습니다. 잠시 후 다시 시도해주세요.', 'error');
             return;
         }
 
-        // Regular teacher login
-        setIsTeacherLoggedIn(true);
-        setCurrentTeacherEmail(email);
-        setView('teacher_dashboard');
+        try {
+            // Firebase Auth로 로그인
+            await authService.login(email, password);
+            // onAuthStateChanged에서 자동으로 로그인 후 처리됨
+            addToast('로그인 성공!', 'success');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : '로그인 중 오류가 발생했습니다.';
+
+            // Firebase Auth 에러 메시지 한글화
+            let koreanMessage = errorMessage;
+            if (errorMessage.includes('user-not-found')) {
+                koreanMessage = '등록되지 않은 이메일입니다.';
+            } else if (errorMessage.includes('wrong-password') || errorMessage.includes('invalid-credential')) {
+                koreanMessage = '이메일 또는 비밀번호가 일치하지 않습니다.';
+            } else if (errorMessage.includes('invalid-email')) {
+                koreanMessage = '유효하지 않은 이메일 형식입니다.';
+            } else if (errorMessage.includes('too-many-requests')) {
+                koreanMessage = '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+            }
+
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'auth_login',
+                additionalInfo: { email }
+            });
+            addToast(koreanMessage, 'error');
+        }
     };
 
-    const handleTeacherWithdraw = () => {
-        if (!currentTeacherEmail) return;
+    const handleTeacherWithdraw = async () => {
+        if (!currentTeacherEmail || !currentTeacherId) return;
 
-        // Find all classes owned by this teacher
-        const teacherClassIds = classes
-            .filter(c => c.teacherEmail === currentTeacherEmail)
-            .map(c => c.id);
+        try {
+            // 교사의 학급 목록 가져오기
+            const teacherClassIds = classes
+                .filter(c => c.teacherEmail === currentTeacherEmail)
+                .map(c => c.id);
 
-        const studentIdsToDelete = students
-            .filter(s => teacherClassIds.includes(s.classId))
-            .map(s => s.id);
+            // 각 학급의 학생과 거래 데이터 삭제
+            for (const classId of teacherClassIds) {
+                const classStudents = students.filter(s => s.classId === classId);
+                for (const student of classStudents) {
+                    // 학생의 거래 내역 삭제
+                    const studentTransactions = await transactionService.getByStudentId(student.id);
+                    for (const tx of studentTransactions) {
+                        await transactionService.delete(tx.id);
+                    }
+                    // 학생 삭제
+                    await studentService.delete(student.id);
+                }
+                // 학급 삭제
+                await classService.delete(classId);
+            }
 
-        // Delete teacher's classes, students, and transactions
-        setClasses(prev => prev.filter(c => c.teacherEmail !== currentTeacherEmail));
-        setStudents(prev => prev.filter(s => !teacherClassIds.includes(s.classId)));
-        setTransactions(prev => prev.filter(t => !studentIdsToDelete.includes(t.studentId)));
+            // 교사 정보 삭제
+            await teacherService.delete(currentTeacherId);
 
-        // Delete teacher account
-        setTeachers(prev => prev.filter(t => t.email.toLowerCase() !== currentTeacherEmail.toLowerCase()));
+            // Firebase Auth 계정 삭제
+            await authService.deleteAccount();
 
-        // Logout
-        setIsTeacherLoggedIn(false);
-        setCurrentTeacherEmail(null);
-        setView('landing');
-        addToast('회원 탈퇴가 완료되었습니다.', 'success');
+            // 로컬 상태 초기화
+            setClasses([]);
+            setStudents([]);
+            setTransactions([]);
+            setIsTeacherLoggedIn(false);
+            setCurrentTeacherEmail(null);
+            setCurrentTeacherId(null);
+            setView('landing');
+
+            addToast('회원 탈퇴가 완료되었습니다.', 'success');
+        } catch (error: unknown) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'teacher_withdraw',
+                additionalInfo: { email: currentTeacherEmail }
+            });
+            addToast('회원 탈퇴 중 오류가 발생했습니다.', 'error');
+        }
     };
     
-    const handleBulkRegisterStudents = (classId: string, studentNames: string[]) => {
+    const handleBulkRegisterStudents = async (classId: string, studentNames: string[]) => {
         const classInfo = classes.find(c => c.id === classId);
         if (!classInfo) return;
-    
-        const classStudents = students.filter(s => s.classId === classId);
-        const existingNames = new Set(classStudents.map(s => s.nickname.toLowerCase()));
-    
-        const newStudents: StudentInfo[] = [];
-        let duplicateCount = 0;
-        
-        studentNames.forEach(name => {
-            const trimmedName = name.trim();
-            if (trimmedName.length > 0 && !existingNames.has(trimmedName.toLowerCase())) {
-                const newStudent: StudentInfo = {
-                    id: `S${Date.now()}-${trimmedName}`,
-                    nickname: trimmedName,
-                    classId: classId,
-                    cash: classInfo.seedMoney,
-                    portfolio: [],
-                };
-                newStudents.push(newStudent);
-                existingNames.add(trimmedName.toLowerCase());
-            } else if (trimmedName.length > 0) {
-                duplicateCount++;
+
+        try {
+            const classStudents = students.filter(s => s.classId === classId);
+            const existingNames = new Set(classStudents.map(s => s.nickname.toLowerCase()));
+
+            const newStudents: StudentInfo[] = [];
+            let duplicateCount = 0;
+
+            for (const name of studentNames) {
+                const trimmedName = name.trim();
+                if (trimmedName.length > 0 && !existingNames.has(trimmedName.toLowerCase())) {
+                    const newStudent: StudentInfo = {
+                        id: `S${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        nickname: trimmedName,
+                        classId: classId,
+                        cash: classInfo.seedMoney,
+                        portfolio: [],
+                    };
+
+                    // Firestore에 저장
+                    await studentService.create(newStudent);
+                    newStudents.push(newStudent);
+                    existingNames.add(trimmedName.toLowerCase());
+                } else if (trimmedName.length > 0) {
+                    duplicateCount++;
+                }
             }
-        });
-    
-        if (newStudents.length > 0) {
-            setStudents(prev => [...prev, ...newStudents]);
+
+            if (newStudents.length > 0) {
+                setStudents(prev => [...prev, ...newStudents]);
+            }
+
+            let message = `${newStudents.length}명의 학생이 성공적으로 등록되었습니다.`;
+            if (duplicateCount > 0) {
+                message += ` (${duplicateCount}개의 중복된 이름은 제외)`;
+            }
+            addToast(message, 'success');
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'student_bulk_register',
+                additionalInfo: { classId, count: studentNames.length }
+            });
+            addToast('학생 등록 중 오류가 발생했습니다.', 'error');
         }
-        
-        let message = `${newStudents.length}명의 학생이 성공적으로 등록되었습니다.`;
-        if (duplicateCount > 0) {
-            message += ` (${duplicateCount}개의 중복된 이름은 제외)`;
-        }
-        addToast(message, 'success');
     };
 
-    const handleDeleteStudent = (studentId: string) => {
+    const handleDeleteStudent = async (studentId: string) => {
         const studentToDelete = students.find(s => s.id === studentId);
         if (!studentToDelete) return;
 
-        setStudents(prev => prev.filter(s => s.id !== studentId));
-        setTransactions(prev => prev.filter(t => t.studentId !== studentId));
-        addToast(`'${studentToDelete.nickname}' 학생이 학급에서 제외되었습니다.`, 'success');
+        try {
+            // 학생의 거래 내역 삭제
+            const studentTransactions = transactions.filter(t => t.studentId === studentId);
+            for (const tx of studentTransactions) {
+                await transactionService.delete(tx.id);
+            }
+
+            // 학생 삭제
+            await studentService.delete(studentId);
+
+            // 로컬 상태 업데이트
+            setStudents(prev => prev.filter(s => s.id !== studentId));
+            setTransactions(prev => prev.filter(t => t.studentId !== studentId));
+
+            addToast(`'${studentToDelete.nickname}' 학생이 학급에서 제외되었습니다.`, 'success');
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'student_delete',
+                additionalInfo: { studentId }
+            });
+            addToast('학생 삭제 중 오류가 발생했습니다.', 'error');
+        }
     };
 
-    const handleTrade = (studentId: string, stockCode: string, quantity: number, type: 'buy' | 'sell') => {
+    const handleTrade = async (studentId: string, stockCode: string, quantity: number, type: 'buy' | 'sell') => {
         const studentIndex = students.findIndex(s => s.id === studentId);
         const stock = stocks.find(s => s.code === stockCode);
         if (studentIndex === -1 || !stock) return;
-    
+
         const originalStudent = students[studentIndex];
         const studentClass = classes.find(c => c.id === originalStudent.classId);
-    
+
         if (!isActivityActive(studentClass)) {
             addToast('현재는 활동 기간이 아닙니다.', 'error');
             return;
         }
-    
+
         const student = { ...originalStudent, portfolio: [...originalStudent.portfolio] };
-    
+
         let commission = 0;
         if (studentClass && studentClass.hasCommission) {
             commission = Math.trunc(stock.price * quantity * (studentClass.commissionRate / 100));
         }
-    
+
         if (type === 'buy') {
             const totalCost = stock.price * quantity + commission;
             if (student.cash < totalCost) {
                 addToast('현금이 부족합니다.', 'error');
                 return;
             }
-    
+
             student.cash -= totalCost;
             const existingHoldingIndex = student.portfolio.findIndex(p => p.stockCode === stockCode);
             if (existingHoldingIndex > -1) {
@@ -344,64 +581,132 @@ const App: React.FC = () => {
                 addToast('보유 수량이 부족합니다.', 'error');
                 return;
             }
-    
+
             student.cash += (stock.price * quantity) - commission;
             const newQuantity = existingHolding.quantity - quantity;
-            
+
             if (newQuantity > 0) {
-                 student.portfolio[existingHoldingIndex] = { ...existingHolding, quantity: newQuantity };
+                student.portfolio[existingHoldingIndex] = { ...existingHolding, quantity: newQuantity };
             } else {
                 student.portfolio = student.portfolio.filter(p => p.stockCode !== stockCode);
             }
         }
-    
-        const updatedStudents = [...students];
-        updatedStudents[studentIndex] = student;
-        setStudents(updatedStudents);
-    
-        const newTransaction: Transaction = {
-            id: `T${Date.now()}`, studentId, stockCode, stockName: stock.name, type, quantity, price: stock.price, timestamp: Date.now()
-        };
-        setTransactions(prev => [newTransaction, ...prev]);
-        addToast(`'${stock.name}' ${type === 'buy' ? '매수' : '매도'} 주문이 체결되었습니다.`, 'success');
+
+        try {
+            // Firestore에 학생 정보 업데이트
+            await studentService.update(studentId, {
+                cash: student.cash,
+                portfolio: student.portfolio
+            });
+
+            // 거래 내역 저장
+            const newTransaction: Transaction = {
+                id: `T${Date.now()}`,
+                studentId,
+                stockCode,
+                stockName: stock.name,
+                type,
+                quantity,
+                price: stock.price,
+                timestamp: Date.now()
+            };
+            await transactionService.create(newTransaction);
+
+            // 로컬 상태 업데이트
+            const updatedStudents = [...students];
+            updatedStudents[studentIndex] = student;
+            setStudents(updatedStudents);
+            setTransactions(prev => [newTransaction, ...prev]);
+
+            addToast(`'${stock.name}' ${type === 'buy' ? '매수' : '매도'} 주문이 체결되었습니다.`, 'success');
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'trade',
+                additionalInfo: { studentId, stockCode, type, quantity }
+            });
+            addToast('거래 처리 중 오류가 발생했습니다.', 'error');
+        }
     };
 
-    const handleAwardBonus = (studentIds: string[], amount: number, reason: string) => {
-        setStudents(prev => 
-            prev.map(s => 
-                studentIds.includes(s.id) ? { ...s, cash: s.cash + amount } : s
-            )
-        );
+    const handleAwardBonus = async (studentIds: string[], amount: number, reason: string) => {
+        try {
+            const newTransactions: Transaction[] = [];
 
-        const newTransactions: Transaction[] = studentIds.map(studentId => ({
-            id: `T${Date.now()}-${studentId}`,
-            studentId,
-            stockCode: "BONUS",
-            stockName: "학급 보너스",
-            type: 'bonus',
-            quantity: 1,
-            price: amount,
-            timestamp: Date.now(),
-            reason,
-        }));
-        
-        setTransactions(prev => [...newTransactions, ...prev]);
-        addToast(`${studentIds.length}명에게 보너스가 지급되었습니다.`, 'success');
+            for (const studentId of studentIds) {
+                const student = students.find(s => s.id === studentId);
+                if (!student) continue;
+
+                // 학생 현금 업데이트
+                const newCash = student.cash + amount;
+                await studentService.update(studentId, { cash: newCash });
+
+                // 보너스 거래 내역 생성
+                const newTransaction: Transaction = {
+                    id: `T${Date.now()}-${studentId}`,
+                    studentId,
+                    stockCode: "BONUS",
+                    stockName: "학급 보너스",
+                    type: 'bonus',
+                    quantity: 1,
+                    price: amount,
+                    timestamp: Date.now(),
+                    reason,
+                };
+                await transactionService.create(newTransaction);
+                newTransactions.push(newTransaction);
+            }
+
+            // 로컬 상태 업데이트
+            setStudents(prev =>
+                prev.map(s =>
+                    studentIds.includes(s.id) ? { ...s, cash: s.cash + amount } : s
+                )
+            );
+            setTransactions(prev => [...newTransactions, ...prev]);
+
+            addToast(`${studentIds.length}명에게 보너스가 지급되었습니다.`, 'success');
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'bonus_award',
+                additionalInfo: { studentIds, amount, reason }
+            });
+            addToast('보너스 지급 중 오류가 발생했습니다.', 'error');
+        }
     };
     
-    const handleLogout = () => {
-        setCurrentStudentId(null);
-        setSelectedClassId(null);
-        setIsTeacherLoggedIn(false);
-        setIsAdminLoggedIn(false);
-        setCurrentTeacherEmail(null);
-        setView('landing');
+    const handleLogout = async () => {
+        try {
+            // 학생 로그아웃 (인증 필요 없음)
+            if (currentStudentId) {
+                setCurrentStudentId(null);
+                setView('landing');
+                return;
+            }
+
+            // 교사/관리자 Firebase Auth 로그아웃
+            await authService.logout();
+
+            // 로컬 상태 초기화 (onAuthStateChanged에서도 처리되지만 명시적으로)
+            setSelectedClassId(null);
+            setIsTeacherLoggedIn(false);
+            setIsAdminLoggedIn(false);
+            setCurrentTeacherEmail(null);
+            setCurrentTeacherId(null);
+            setClasses([]);
+            setStudents([]);
+            setTransactions([]);
+            setView('landing');
+        } catch (error) {
+            logError(error instanceof Error ? error : new Error(String(error)), {
+                type: 'logout',
+                additionalInfo: {}
+            });
+            addToast('로그아웃 중 오류가 발생했습니다.', 'error');
+        }
     };
 
-    const handleAdminLogout = () => {
-        setIsAdminLoggedIn(false);
-        setCurrentTeacherEmail(null);
-        setView('landing');
+    const handleAdminLogout = async () => {
+        await handleLogout();
     };
 
     const handleSaveNotice = (notice: Notice) => {
@@ -601,6 +906,65 @@ const App: React.FC = () => {
             />;
         }
     };
+
+    // Firebase 에러 화면
+    if (firebaseError) {
+        return (
+            <ErrorBoundary>
+                <div className="app-container">
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '100vh',
+                        padding: '2rem',
+                        textAlign: 'center',
+                        backgroundColor: '#f8f9fa'
+                    }}>
+                        <div style={{
+                            backgroundColor: 'white',
+                            padding: '3rem',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            maxWidth: '500px'
+                        }}>
+                            <h1 style={{ color: '#dc3545', marginBottom: '1rem' }}>서비스 설정 필요</h1>
+                            <p style={{ color: '#666', marginBottom: '2rem', lineHeight: '1.6' }}>
+                                {firebaseError}
+                            </p>
+                            <div style={{
+                                backgroundColor: '#f8f9fa',
+                                padding: '1.5rem',
+                                borderRadius: '8px',
+                                textAlign: 'left',
+                                fontSize: '0.9rem'
+                            }}>
+                                <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>설정 방법:</p>
+                                <ol style={{ paddingLeft: '1.2rem', margin: 0, lineHeight: '1.8' }}>
+                                    <li>Firebase 콘솔에서 프로젝트 생성</li>
+                                    <li>웹 앱 등록 및 설정 값 복사</li>
+                                    <li>.env 파일 생성 후 설정 값 입력</li>
+                                    <li>앱 재시작</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ErrorBoundary>
+        );
+    }
+
+    // 로딩 중
+    if (isLoading) {
+        return (
+            <ErrorBoundary>
+                <div className="app-container">
+                    <LoadingSpinner />
+                </div>
+            </ErrorBoundary>
+        );
+    }
 
     return (
         <ErrorBoundary>
