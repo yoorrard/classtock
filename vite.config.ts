@@ -20,6 +20,19 @@ export default defineConfig(({ mode }) => {
           '@': path.resolve(__dirname, '.'),
         }
       },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              // Split vendor chunks
+              'vendor-react': ['react', 'react-dom'],
+              'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+            },
+          },
+        },
+        // Increase chunk size warning limit (Firebase is large)
+        chunkSizeWarningLimit: 600,
+      },
       test: {
         globals: true,
         environment: 'jsdom',

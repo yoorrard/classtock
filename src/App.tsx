@@ -1,17 +1,32 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost, PopupNotice, Teacher } from './types';
 import { mockStockData, mockNotices, mockQandAPosts, mockPopupNotices } from './data';
 import { getStockData, getDataSourceInfo } from './services/stockService';
 import { adminService } from './firebase/services';
-
-import LandingPage from './components/landing/LandingPage';
-import TeacherDashboard from './components/teacher/TeacherDashboard';
-import ClassDetailView from './components/teacher/ClassDetailView';
-import StudentDashboard from './components/student/StudentDashboard';
-import NoticeBoard from './components/public/NoticeBoard';
-import QnABoard from './components/public/QnABoard';
-import AdminDashboard from './components/admin/AdminDashboard';
 import { ToastContainer } from './components/shared/Toast';
+
+// Lazy load page components for better performance
+const LandingPage = lazy(() => import('./components/landing/LandingPage'));
+const TeacherDashboard = lazy(() => import('./components/teacher/TeacherDashboard'));
+const ClassDetailView = lazy(() => import('./components/teacher/ClassDetailView'));
+const StudentDashboard = lazy(() => import('./components/student/StudentDashboard'));
+const NoticeBoard = lazy(() => import('./components/public/NoticeBoard'));
+const QnABoard = lazy(() => import('./components/public/QnABoard'));
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
+
+// Loading spinner component
+const LoadingSpinner = () => (
+    <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '1.2rem',
+        color: '#666'
+    }}>
+        <div>로딩 중...</div>
+    </div>
+);
 
 const App: React.FC = () => {
     // --- STATE MANAGEMENT ---
@@ -577,10 +592,14 @@ const App: React.FC = () => {
         }
     };
 
-    return <div className="app-container">
-        {renderView()}
-        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-    </div>;
+    return (
+        <div className="app-container">
+            <Suspense fallback={<LoadingSpinner />}>
+                {renderView()}
+            </Suspense>
+            <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+        </div>
+    );
 };
 
 export default App;
