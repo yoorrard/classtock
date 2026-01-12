@@ -5,23 +5,16 @@ interface TeacherLoginModalProps {
     onLoginSuccess: (email: string, password: string) => void;
     onSwitchToRegister: () => void;
     onForgotPassword: () => void;
-    onAdminLogin: () => void;
+    isLoading?: boolean;
 }
-const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginSuccess, onSwitchToRegister, onForgotPassword, onAdminLogin }) => {
+const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginSuccess, onSwitchToRegister, onForgotPassword, isLoading = false }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    
+
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Check for admin credentials
-        if (email === 'admin@classstock.com' && password === 'admin') {
-            onAdminLogin();
-            return;
-        }
-
-        // Standard teacher login
+        // All login logic (including admin check) is handled in App.tsx
         onLoginSuccess(email, password);
     };
 
@@ -89,7 +82,9 @@ const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({ onClose, onLoginS
                             비밀번호를 잊으셨나요?
                         </button>
                     </div>
-                    <button type="submit" className="button" style={{ width: '100%' }}>로그인</button>
+                    <button type="submit" className="button" style={{ width: '100%' }} disabled={isLoading}>
+                        {isLoading ? '로그인 중...' : '로그인'}
+                    </button>
                 </form>
 
                 <button type="button" className="button-link" onClick={onSwitchToRegister}>

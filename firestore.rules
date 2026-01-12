@@ -6,14 +6,21 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Helper function to check if user is admin
+    // Helper function to check if user is admin (checks admins collection)
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.email == 'admin@classstock.com';
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
     }
 
     // Helper function to check if user owns the resource
     function isOwner(email) {
       return isAuthenticated() && request.auth.token.email == email;
+    }
+
+    // Admins collection (only existing admins can manage)
+    match /admins/{email} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
     }
 
     // Teachers collection

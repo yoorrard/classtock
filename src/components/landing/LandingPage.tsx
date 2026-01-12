@@ -25,10 +25,9 @@ interface LandingPageProps {
     onStudentJoin: (code: string, name: string) => void;
     onTeacherLogin: (email: string, password: string) => void;
     onTeacherRegister: (email: string, password: string) => void;
-    onAdminLogin: () => void;
     addToast: (message: string, type?: ToastMessage['type']) => void;
 }
-const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavigate, onStudentJoin, onTeacherLogin, onTeacherRegister, onAdminLogin, addToast }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavigate, onStudentJoin, onTeacherLogin, onTeacherRegister, addToast }) => {
     const [policyModal, setPolicyModal] = useState<{ title: string; content: string } | null>(null);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
     const [activeModal, setActiveModal] = useState<'student' | 'teacherLogin' | 'teacherRegister' | 'passwordReset' | null>(null);
@@ -287,12 +286,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ notices, popupNotices, onNavi
                 
                 {policyModal && <PolicyModal title={policyModal.title} content={policyModal.content} onClose={() => setPolicyModal(null)} />}
                 {activeModal === 'student' && <StudentLoginModal onClose={() => setActiveModal(null)} onJoin={onStudentJoin} />}
-                {activeModal === 'teacherLogin' && <TeacherLoginModal 
-                    onClose={() => setActiveModal(null)} 
+                {activeModal === 'teacherLogin' && <TeacherLoginModal
+                    onClose={() => setActiveModal(null)}
                     onLoginSuccess={onTeacherLogin}
                     onSwitchToRegister={() => setActiveModal('teacherRegister')}
                     onForgotPassword={() => setActiveModal('passwordReset')}
-                    onAdminLogin={onAdminLogin}
                 />}
                 {activeModal === 'teacherRegister' && <TeacherRegisterModal
                     onClose={() => setActiveModal(null)}

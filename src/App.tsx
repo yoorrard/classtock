@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Stock, ClassInfo, StudentInfo, Transaction, ToastMessage, Notice, QnAPost, PopupNotice, Teacher } from './types';
 import { mockStockData, mockNotices, mockQandAPosts, mockPopupNotices } from './data';
 import { getStockData, getDataSourceInfo } from './services/stockService';
+import { adminService } from './firebase/services';
 
 import LandingPage from './components/landing/LandingPage';
 import TeacherDashboard from './components/teacher/TeacherDashboard';
@@ -168,18 +169,33 @@ const App: React.FC = () => {
         setView('teacher_dashboard');
     };
 
-    const handleTeacherLogin = (email: string, password: string) => {
+    const handleTeacherLogin = async (email: string, password: string) => {
         // Check credentials (skip for Google auth which passes empty password)
         if (password) {
             const teacher = teachers.find(t =>
                 t.email.toLowerCase() === email.toLowerCase() && t.password === password
             );
             if (!teacher) {
-                addToast('이메일 또는 비밀번호가 일치하지 않습니다.', 'error');
-                return;
+                // Check if it's an admin login attempt
+                const isAdmin = await adminService.isAdmin(email);
+                if (!isAdmin) {
+                    addToast('이메일 또는 비밀번호가 일치하지 않습니다.', 'error');
+                    return;
+                }
             }
         }
 
+        // Check if user is admin
+        const isAdmin = await adminService.isAdmin(email);
+        if (isAdmin) {
+            setIsAdminLoggedIn(true);
+            setCurrentTeacherEmail(email);
+            setView('admin_dashboard');
+            addToast('관리자 모드로 로그인했습니다.', 'success');
+            return;
+        }
+
+        // Regular teacher login
         setIsTeacherLoggedIn(true);
         setCurrentTeacherEmail(email);
         setView('teacher_dashboard');
@@ -352,18 +368,14 @@ const App: React.FC = () => {
         setCurrentStudentId(null);
         setSelectedClassId(null);
         setIsTeacherLoggedIn(false);
+        setIsAdminLoggedIn(false);
         setCurrentTeacherEmail(null);
-        setView('landing'); 
+        setView('landing');
     };
-    
-    const handleAdminLogin = () => {
-        setIsAdminLoggedIn(true);
-        setView('admin_dashboard');
-        addToast('관리자 모드로 로그인했습니다.', 'success');
-    };
-    
+
     const handleAdminLogout = () => {
         setIsAdminLoggedIn(false);
+        setCurrentTeacherEmail(null);
         setView('landing');
     };
 
@@ -560,7 +572,6 @@ const App: React.FC = () => {
                 onStudentJoin={handleStudentJoin}
                 onTeacherLogin={handleTeacherLogin}
                 onTeacherRegister={handleTeacherRegister}
-                onAdminLogin={handleAdminLogin}
                 addToast={addToast}
             />;
         }
